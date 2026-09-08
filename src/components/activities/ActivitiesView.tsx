@@ -408,7 +408,7 @@ export const ActivitiesView: React.FC<ActivitiesViewProps> = ({
 
         {/* Table */}
         <div className="overflow-x-auto">
-          <table id="table-activities" className="w-full text-left border-collapse">
+          <table id="table-activities" className="w-full text-left border-collapse min-w-[700px]">
             <thead>
               <tr className="bg-slate-50/80 border-b border-slate-200 text-[11px] font-bold text-slate-500 uppercase tracking-wider">
                 <th className="py-3 px-4 text-center w-12">No</th>
@@ -525,10 +525,10 @@ export const ActivitiesView: React.FC<ActivitiesViewProps> = ({
       {isModalOpen && (
         <div
           id="modal-activity"
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in"
+          className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in"
         >
-          <div className="w-full max-w-lg bg-white rounded-2xl shadow-2xl border border-slate-100 overflow-hidden">
-            <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+          <div className="w-full max-w-lg max-h-[90dvh] flex flex-col bg-white rounded-2xl shadow-2xl border border-slate-100 overflow-hidden">
+            <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50 flex-shrink-0">
               <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
                 <CalendarCheck className="w-4 h-4 text-[#04457e]" />
                 {editingActivity ? 'Edit Informasi Kegiatan' : 'Tambah Kegiatan / Event Baru'}
@@ -542,8 +542,8 @@ export const ActivitiesView: React.FC<ActivitiesViewProps> = ({
               </button>
             </div>
 
-            <form onSubmit={handleSubmit}>
-              <div className="p-6 space-y-4">
+            <form onSubmit={handleSubmit} className="flex-1 flex flex-col overflow-hidden">
+              <div className="p-4 sm:p-6 space-y-4 overflow-y-auto flex-1">
                 {formError && (
                   <div className="p-3 text-xs font-semibold text-rose-700 bg-rose-50 border border-rose-200 rounded-xl">
                     {formError}
@@ -650,10 +650,10 @@ export const ActivitiesView: React.FC<ActivitiesViewProps> = ({
       {detailActivity && (
         <div
           id="modal-activity-detail"
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in"
+          className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in"
         >
-          <div className="w-full max-w-2xl bg-white rounded-2xl shadow-2xl border border-slate-100 overflow-hidden flex flex-col max-h-[85vh]">
-            <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+          <div className="w-full max-w-2xl bg-white rounded-2xl shadow-2xl border border-slate-100 overflow-hidden flex flex-col max-h-[90dvh]">
+            <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50 flex-shrink-0">
               <div className="flex items-center gap-3">
                 <div className="w-9 h-9 rounded-xl bg-[#04457e]/10 text-[#04457e] flex items-center justify-center border border-[#04457e]/20">
                   <CalendarCheck className="w-5 h-5" />
@@ -674,7 +674,7 @@ export const ActivitiesView: React.FC<ActivitiesViewProps> = ({
               </button>
             </div>
 
-            <div className="flex-1 overflow-y-auto p-6 space-y-5">
+            <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-5">
               {/* Event Info Card */}
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 p-4 rounded-2xl bg-slate-50 border border-slate-200/80 text-xs">
                 <div>
@@ -722,8 +722,8 @@ export const ActivitiesView: React.FC<ActivitiesViewProps> = ({
                   )}
                 </div>
 
-                <div className="border border-slate-200/80 rounded-xl overflow-hidden">
-                  <table className="w-full text-left text-xs border-collapse">
+                <div className="border border-slate-200/80 rounded-xl overflow-x-auto">
+                  <table className="w-full text-left text-xs border-collapse min-w-[480px]">
                     <thead>
                       <tr className="bg-slate-50 border-b border-slate-200 text-[11px] font-bold text-slate-500 uppercase">
                         <th className="py-2.5 px-3 w-10 text-center">No</th>

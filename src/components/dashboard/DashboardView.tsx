@@ -116,7 +116,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   return (
     <div id="dashboard-container" className="space-y-6 pb-10">
       {/* 5 Summary Metric Cards */}
-      <div id="summary-cards-grid" className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
+      <div id="summary-cards-grid" className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4">
         {/* Card 1: Total Jenis Souvenir */}
         <div
           id="card-total-jenis"
@@ -192,7 +192,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
         {/* Card 5: Total Kegiatan */}
         <div
           id="card-total-kegiatan"
-          className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-xs hover:border-slate-300 transition-all flex flex-col justify-between"
+          className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-xs hover:border-slate-300 transition-all flex flex-col justify-between col-span-2 sm:col-span-1"
         >
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Total Kegiatan</span>

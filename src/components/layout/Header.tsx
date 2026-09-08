@@ -59,15 +59,15 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, onOpenMobileMenu, onN
   return (
     <header
       id="main-header"
-      className="sticky top-0 z-30 bg-white/95 backdrop-blur-md border-b border-slate-200/80 px-4 sm:px-6 lg:px-8 py-3.5 transition-all"
+      className="sticky top-0 z-30 bg-white/95 backdrop-blur-md border-b border-slate-200/80 px-3 sm:px-6 lg:px-8 py-3 transition-all safe-top"
     >
-      <div className="flex items-center justify-between gap-4">
+      <div className="flex items-center justify-between gap-2 sm:gap-4">
         {/* Left: Mobile Toggle, Mobile Logo & Page Title */}
-        <div className="flex items-center gap-2.5 sm:gap-3">
+        <div className="flex items-center gap-2 sm:gap-3 min-w-0">
           <button
             id="btn-toggle-mobile-sidebar"
             onClick={onOpenMobileMenu}
-            className="lg:hidden p-2 rounded-xl text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition-colors cursor-pointer"
+            className="lg:hidden p-2 -ml-1 rounded-xl text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition-colors cursor-pointer flex-shrink-0"
             aria-label="Buka Menu Navigasi"
           >
             <Menu className="w-5 h-5" />
@@ -82,12 +82,12 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, onOpenMobileMenu, onN
             />
           </div>
 
-          <div>
+          <div className="min-w-0">
             <div className="flex items-center gap-2">
-              <h2 id="page-main-heading" className="text-lg sm:text-xl font-extrabold text-slate-900 tracking-tight">
+              <h2 id="page-main-heading" className="text-base sm:text-xl font-extrabold text-slate-900 tracking-tight truncate">
                 {title}
               </h2>
-              <span className="hidden sm:inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200/60">
+              <span className="hidden sm:inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200/60 flex-shrink-0">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
                 Live Sync
               </span>

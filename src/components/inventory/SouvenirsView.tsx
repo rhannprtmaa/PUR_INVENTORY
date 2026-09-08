@@ -571,7 +571,7 @@ export const SouvenirsView: React.FC<SouvenirsViewProps> = ({ onSelectSouvenirDe
 
         {/* Table */}
         <div className="overflow-x-auto">
-          <table id="table-souvenirs-catalog" className="w-full text-left border-collapse">
+          <table id="table-souvenirs-catalog" className="w-full text-left border-collapse min-w-[700px]">
             <thead>
               <tr className="bg-slate-50/80 border-b border-slate-200 text-[11px] font-bold text-slate-500 uppercase tracking-wider">
                 <th className="py-3 px-4 text-center w-12">No</th>
@@ -702,10 +702,10 @@ export const SouvenirsView: React.FC<SouvenirsViewProps> = ({ onSelectSouvenirDe
       {isAddModalOpen && (
         <div
           id="modal-add-souvenir"
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in"
+          className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in"
         >
-          <div className="w-full max-w-lg bg-white rounded-2xl shadow-2xl border border-slate-100 overflow-hidden">
-            <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+          <div className="w-full max-w-lg max-h-[90dvh] flex flex-col bg-white rounded-2xl shadow-2xl border border-slate-100 overflow-hidden">
+            <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50 flex-shrink-0">
               <div className="flex items-center gap-2">
                 <Boxes className="w-4 h-4 text-[#04457e]" />
                 <h3 className="text-sm font-bold text-slate-900">Tambah Souvenir Baru</h3>
@@ -718,8 +718,8 @@ export const SouvenirsView: React.FC<SouvenirsViewProps> = ({ onSelectSouvenirDe
               </button>
             </div>
 
-            <form onSubmit={handleSaveAdd}>
-              <div className="p-6 space-y-4 max-h-[75vh] overflow-y-auto">
+            <form onSubmit={handleSaveAdd} className="flex-1 flex flex-col overflow-hidden">
+              <div className="p-4 sm:p-6 space-y-4 overflow-y-auto flex-1">
                 {formError && (
                   <div className="p-3 text-xs font-semibold text-rose-700 bg-rose-50 border border-rose-200 rounded-xl">
                     {formError}
@@ -846,10 +846,10 @@ export const SouvenirsView: React.FC<SouvenirsViewProps> = ({ onSelectSouvenirDe
       {editingSouvenir && (
         <div
           id="modal-edit-souvenir"
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in"
+          className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in"
         >
-          <div className="w-full max-w-lg bg-white rounded-2xl shadow-2xl border border-slate-100 overflow-hidden">
-            <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+          <div className="w-full max-w-lg max-h-[90dvh] flex flex-col bg-white rounded-2xl shadow-2xl border border-slate-100 overflow-hidden">
+            <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50 flex-shrink-0">
               <div className="flex items-center gap-2">
                 <Edit2 className="w-4 h-4 text-[#04457e]" />
                 <h3 className="text-sm font-bold text-slate-900">Edit Data Souvenir</h3>
@@ -862,8 +862,8 @@ export const SouvenirsView: React.FC<SouvenirsViewProps> = ({ onSelectSouvenirDe
               </button>
             </div>
 
-            <form onSubmit={handleSaveEdit}>
-              <div className="p-6 space-y-4 max-h-[75vh] overflow-y-auto">
+            <form onSubmit={handleSaveEdit} className="flex-1 flex flex-col overflow-hidden">
+              <div className="p-4 sm:p-6 space-y-4 overflow-y-auto flex-1">
                 {formError && (
                   <div className="p-3 text-xs font-semibold text-rose-700 bg-rose-50 border border-rose-200 rounded-xl">
                     {formError}

@@ -654,7 +654,7 @@ export const InventoryOutView: React.FC<InventoryOutViewProps> = ({
 
         {/* Table */}
         <div className="overflow-x-auto">
-          <table id="table-inventory-out" className="w-full text-left border-collapse">
+          <table id="table-inventory-out" className="w-full text-left border-collapse min-w-[750px]">
             <thead>
               <tr className="bg-slate-50/80 border-b border-slate-200 text-[11px] font-bold text-slate-500 uppercase tracking-wider">
                 <th className="py-3 px-4 text-center w-12">No</th>
@@ -794,8 +794,8 @@ export const InventoryOutView: React.FC<InventoryOutViewProps> = ({
           id="modal-inventory-out"
           className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-slate-900/60 backdrop-blur-xs animate-in fade-in"
         >
-          <div className="w-full max-w-3xl bg-white rounded-2xl shadow-2xl border border-slate-100 overflow-hidden flex flex-col max-h-[90vh]">
-            <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+          <div className="w-full max-w-3xl bg-white rounded-2xl shadow-2xl border border-slate-100 overflow-hidden flex flex-col max-h-[90dvh]">
+            <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50 flex-shrink-0">
               <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
                 <ArrowUpFromLine className="w-4 h-4 text-[#04457e]" />
                 {editingOut ? 'Edit Transaksi Pengeluaran Barang' : 'Catat Barang Keluar untuk Kegiatan'}
@@ -809,7 +809,7 @@ export const InventoryOutView: React.FC<InventoryOutViewProps> = ({
               </button>
             </div>
 
-            <form onSubmit={handleSubmit} noValidate className="flex-1 overflow-y-auto p-6 space-y-6">
+            <form onSubmit={handleSubmit} noValidate className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-6">
               {formError && (
                 <div className="p-3.5 text-xs font-semibold text-rose-700 bg-rose-50 border border-rose-200 rounded-xl flex items-start gap-2">
                   <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
@@ -1040,10 +1040,10 @@ export const InventoryOutView: React.FC<InventoryOutViewProps> = ({
       {detailOut && (
         <div
           id="modal-out-detail"
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in"
+          className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in"
         >
-          <div className="w-full max-w-xl bg-white rounded-2xl shadow-2xl border border-slate-100 overflow-hidden flex flex-col max-h-[85vh]">
-            <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+          <div className="w-full max-w-xl bg-white rounded-2xl shadow-2xl border border-slate-100 overflow-hidden flex flex-col max-h-[90dvh]">
+            <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50 flex-shrink-0">
               <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
                 <ArrowUpFromLine className="w-4 h-4 text-[#04457e]" />
                 Rincian Barang Keluar
@@ -1057,7 +1057,7 @@ export const InventoryOutView: React.FC<InventoryOutViewProps> = ({
               </button>
             </div>
 
-            <div className="p-6 space-y-4">
+            <div className="p-4 sm:p-6 space-y-4 overflow-y-auto flex-1">
               {(() => {
                 const activity = activities.find((a) => a.id === detailOut.activityId);
                 const items = inventoryOutItems.filter((it) => it.inventoryOutId === detailOut.id);
@@ -1090,8 +1090,8 @@ export const InventoryOutView: React.FC<InventoryOutViewProps> = ({
                       <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider mb-2">
                         Souvenir Terdistribusi ({totalCount} item)
                       </h4>
-                      <div className="border border-slate-200 rounded-xl overflow-hidden">
-                        <table className="w-full text-left text-xs">
+                      <div className="border border-slate-200 rounded-xl overflow-x-auto">
+                        <table className="w-full text-left text-xs min-w-[380px]">
                           <thead>
                             <tr className="bg-slate-50 border-b border-slate-200 text-[11px] font-bold text-slate-500 uppercase">
                               <th className="py-2.5 px-3">Nama Souvenir</th>

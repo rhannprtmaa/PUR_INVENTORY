@@ -719,7 +719,7 @@ export const InventoryInView: React.FC<InventoryInViewProps> = ({ onSelectSouven
 
           {/* Table */}
           <div className="overflow-x-auto">
-            <table id="table-inventory-in" className="w-full text-left border-collapse">
+            <table id="table-inventory-in" className="w-full text-left border-collapse min-w-[700px]">
               <thead>
                 <tr className="bg-slate-50/80 border-b border-slate-200 text-[11px] font-bold text-slate-500 uppercase tracking-wider">
                   <th className="py-3 px-4 text-center w-12">No</th>
@@ -845,10 +845,10 @@ export const InventoryInView: React.FC<InventoryInViewProps> = ({ onSelectSouven
       {isModalOpen && (
         <div
           id="modal-inventory-in"
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in"
+          className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in"
         >
-          <div className="w-full max-w-lg bg-white rounded-2xl shadow-2xl border border-slate-100 overflow-hidden">
-            <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+          <div className="w-full max-w-lg max-h-[90dvh] flex flex-col bg-white rounded-2xl shadow-2xl border border-slate-100 overflow-hidden">
+            <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50 flex-shrink-0">
               <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
                 <PackagePlus className="w-4 h-4 text-[#04457e]" />
                 {editingItem ? 'Edit Data Barang Masuk' : 'Input Penerimaan Barang Masuk'}
@@ -861,8 +861,8 @@ export const InventoryInView: React.FC<InventoryInViewProps> = ({ onSelectSouven
               </button>
             </div>
 
-            <form onSubmit={handleSubmit}>
-              <div className="p-6 space-y-4">
+            <form onSubmit={handleSubmit} className="flex-1 flex flex-col overflow-hidden">
+              <div className="p-4 sm:p-6 space-y-4 overflow-y-auto flex-1">
                 {formError && (
                   <div className="p-3 text-xs font-semibold text-rose-700 bg-rose-50 border border-rose-200 rounded-xl">
                     {formError}

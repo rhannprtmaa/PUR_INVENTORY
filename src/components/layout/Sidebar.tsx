@@ -88,7 +88,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       {/* Sidebar Container */}
       <aside
         id="main-sidebar"
-        className={`fixed lg:static top-0 left-0 bottom-0 z-40 w-72 bg-[#04457e] text-white flex flex-col justify-between overflow-hidden transition-transform duration-300 ease-in-out border-r border-[#033663] shadow-xl lg:shadow-none select-none ${
+        className={`fixed lg:static top-0 left-0 bottom-0 z-40 w-72 max-w-[85vw] bg-[#04457e] text-white flex flex-col justify-between overflow-hidden transition-transform duration-300 ease-in-out border-r border-[#033663] shadow-xl lg:shadow-none select-none safe-top ${
           isMobileOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
         }`}
       >
@@ -283,7 +283,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
         </div>
 
         {/* User Card & Profile Navigation Footer */}
-        <div className="p-3 border-t border-white/10 bg-[#033663]/50 flex-shrink-0">
+        <div className="p-3 border-t border-white/10 bg-[#033663]/50 flex-shrink-0 safe-bottom">
           <div
             className={`flex items-center justify-between p-2 rounded-xl transition-all ${
               activeTab === 'profile'

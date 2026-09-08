@@ -755,7 +755,7 @@ export const ReportsView: React.FC = () => {
         {reportType === 'activity' ? (
           /* TAB 1: REKAPITULASI PER KEGIATAN */
           <div className="overflow-x-auto">
-            <table id="table-report-activities" className="w-full text-left border-collapse">
+            <table id="table-report-activities" className="w-full text-left border-collapse min-w-[720px]">
               <thead>
                 <tr className="bg-slate-50/80 border-b border-slate-200 text-[11px] font-bold text-slate-500 uppercase tracking-wider">
                   <th className="py-3 px-4 w-12 text-center">No</th>
@@ -872,7 +872,7 @@ export const ReportsView: React.FC = () => {
         ) : (
           /* TAB 2: REKAPITULASI PER BARANG KELUAR */
           <div className="overflow-x-auto">
-            <table id="table-report-items" className="w-full text-left border-collapse">
+            <table id="table-report-items" className="w-full text-left border-collapse min-w-[700px]">
               <thead>
                 <tr className="bg-slate-50/80 border-b border-slate-200 text-[11px] font-bold text-slate-500 uppercase tracking-wider">
                   <th className="py-3 px-4 w-12 text-center">No</th>
@@ -1008,9 +1008,9 @@ export const ReportsView: React.FC = () => {
 
       {/* DETAIL MODAL: DETAIL KEGIATAN */}
       {selectedActivityDetail && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
-          <div className="bg-white rounded-2xl border border-slate-200 shadow-2xl max-w-lg w-full overflow-hidden animate-in fade-in zoom-in-95 duration-150">
-            <div className="p-5 border-b border-slate-100 flex items-center justify-between bg-slate-50">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/60 backdrop-blur-xs">
+          <div className="bg-white rounded-2xl border border-slate-200 shadow-2xl max-w-lg w-full max-h-[90dvh] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+            <div className="p-4 sm:p-5 border-b border-slate-100 flex items-center justify-between bg-slate-50 flex-shrink-0">
               <div>
                 <h4 className="text-sm font-bold text-slate-900">
                   Rincian Pengeluaran Kegiatan
@@ -1025,7 +1025,7 @@ export const ReportsView: React.FC = () => {
               </button>
             </div>
 
-            <div className="p-5 space-y-4 max-h-[70vh] overflow-y-auto">
+            <div className="p-4 sm:p-5 space-y-4 flex-1 overflow-y-auto">
               <div className="grid grid-cols-2 gap-3 text-xs bg-slate-50 p-3 rounded-xl border border-slate-200/80">
                 <div>
                   <span className="text-slate-500 font-medium">Tanggal:</span>

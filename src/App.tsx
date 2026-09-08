@@ -49,7 +49,7 @@ const MainContent: React.FC = () => {
   }
 
   return (
-    <div className="flex h-screen bg-slate-100/70 font-sans text-slate-800 overflow-hidden antialiased selection:bg-[#04457e] selection:text-white">
+    <div className="flex h-[100dvh] bg-slate-100/70 font-sans text-slate-800 overflow-hidden antialiased selection:bg-[#04457e] selection:text-white">
       {/* Toast Notification Container */}
       <ToastContainer />
 
@@ -83,7 +83,7 @@ const MainContent: React.FC = () => {
         />
 
         {/* Scrollable View Area */}
-        <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
+        <main className="flex-1 overflow-y-auto p-3 sm:p-5 md:p-6 lg:p-8 safe-bottom">
           <div className="max-w-7xl mx-auto">
             {activeTab === 'dashboard' && (
               <DashboardView
