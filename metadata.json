@@ -1,0 +1,6 @@
+{
+  "name": "PUR INVENTORY",
+  "description": "Sistem modern dan profesional untuk monitoring stok souvenir, pencatatan barang masuk & keluar per kegiatan, reporting, serta export PDF dan Excel.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
