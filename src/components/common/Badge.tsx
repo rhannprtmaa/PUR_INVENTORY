@@ -45,6 +45,19 @@ export const StockBadge: React.FC<StockBadgeProps> = ({ status, size = 'md' }) =
   }
 };
 
+export const ArchiveBadge: React.FC<{ size?: 'sm' | 'md' }> = ({ size = 'md' }) => {
+  const sizeClasses = size === 'sm' ? 'px-2 py-0.5 text-xs font-semibold' : 'px-2.5 py-1 text-xs font-bold';
+  return (
+    <span
+      id="badge-status-archived"
+      className={`inline-flex items-center gap-1.5 rounded-full bg-slate-100 text-slate-600 border border-slate-300/80 ${sizeClasses}`}
+    >
+      <span className="w-1.5 h-1.5 rounded-full bg-slate-400"></span>
+      Nonaktif (Diarsipkan)
+    </span>
+  );
+};
+
 export const TypeBadge: React.FC<{ type: 'IN' | 'OUT' }> = ({ type }) => {
   if (type === 'IN') {
     return (
@@ -65,3 +78,4 @@ export const TypeBadge: React.FC<{ type: 'IN' | 'OUT' }> = ({ type }) => {
     </span>
   );
 };
+

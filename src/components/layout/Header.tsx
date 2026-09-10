@@ -83,15 +83,9 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, onOpenMobileMenu, onN
           </div>
 
           <div className="min-w-0">
-            <div className="flex items-center gap-2">
-              <h2 id="page-main-heading" className="text-base sm:text-xl font-extrabold text-slate-900 tracking-tight truncate">
-                {title}
-              </h2>
-              <span className="hidden sm:inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200/60 flex-shrink-0">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                Live Sync
-              </span>
-            </div>
+            <h2 id="page-main-heading" className="text-base sm:text-xl font-extrabold text-slate-900 tracking-tight truncate">
+              {title}
+            </h2>
           </div>
         </div>
 

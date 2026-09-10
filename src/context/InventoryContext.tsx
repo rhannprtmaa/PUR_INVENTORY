@@ -87,6 +87,7 @@ interface InventoryContextType {
   // Souvenirs CRUD
   addSouvenir: (data: Omit<Souvenir, 'id' | 'createdAt' | 'updatedAt'>) => { success: boolean; message?: string; id?: string };
   updateSouvenir: (id: string, data: Partial<Omit<Souvenir, 'id' | 'createdAt'>>) => { success: boolean; message?: string };
+  toggleArchiveSouvenir: (id: string) => { success: boolean; message?: string; isArchived?: boolean };
   deleteSouvenir: (id: string) => { success: boolean; message?: string };
 
   // Activities CRUD
@@ -137,7 +138,7 @@ interface InventoryContextType {
 
 const InventoryContext = createContext<InventoryContextType | undefined>(undefined);
 
-export const DUMMY_DEFAULT_ACCOUNT: User = {
+export const MAIN_ADMIN_ACCOUNT: User = {
   id: 'usr_pur_admin_sulsel',
   name: 'Pengelola PUR Inventory',
   email: 'purinventorybi@gmail.com',
@@ -147,6 +148,9 @@ export const DUMMY_DEFAULT_ACCOUNT: User = {
   createdAt: '2026-01-01T00:00:00.000Z',
   updatedAt: new Date().toISOString(),
 };
+
+// Export alias for backward compatibility
+export const DUMMY_DEFAULT_ACCOUNT = MAIN_ADMIN_ACCOUNT;
 
 const getStoredProfile = (): User => {
   try {
@@ -160,7 +164,7 @@ const getStoredProfile = (): User => {
   } catch (e) {
     // ignore
   }
-  return DUMMY_DEFAULT_ACCOUNT;
+  return MAIN_ADMIN_ACCOUNT;
 };
 
 const getStoredPassword = (): string => {
@@ -247,18 +251,14 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     const currentSavedProfile = getStoredProfile();
     const currentSavedPassword = getStoredPassword();
 
-    // 1. Check against embedded / saved dummy account
-    const isDummyEmailMatch =
+    // 1. Check against the saved official main account
+    const isMainEmailMatch =
       normalizedEmail === currentSavedProfile.email.toLowerCase() ||
-      normalizedEmail === 'purinventorybi@gmail.com' ||
-      normalizedEmail === 'admin@bi.go.id';
+      normalizedEmail === 'purinventorybi@gmail.com';
 
-    const isDummyPasswordMatch =
-      cleanPassword === currentSavedPassword ||
-      cleanPassword === 'admin123' ||
-      cleanPassword.length >= 4;
+    const isPasswordMatch = cleanPassword === currentSavedPassword;
 
-    // 2. Also try Firebase Auth in background if possible
+    // 2. Also try Firebase Auth in background if configured
     try {
       const cred = await signInWithEmailAndPassword(auth, normalizedEmail, cleanPassword);
       if (cred && cred.user) {
@@ -287,11 +287,11 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         return { success: true };
       }
     } catch (err: any) {
-      console.warn('Firebase login attempt:', err?.code);
+      // Firebase login attempt fallback
     }
 
-    // 3. If dummy account matches or general login for internal app
-    if (isDummyEmailMatch && isDummyPasswordMatch) {
+    // 3. Verify credentials for official main account
+    if (isMainEmailMatch && isPasswordMatch) {
       const profileToUse: User = {
         ...currentSavedProfile,
         email: normalizedEmail,
@@ -306,24 +306,17 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       return { success: true };
     }
 
-    if (!isDummyPasswordMatch) {
-      addToast('Kata sandi tidak sesuai. Gunakan sandi admin123', 'error');
-      return { success: false, message: 'Kata sandi tidak sesuai. Akun bawaan: admin123' };
+    if (!isMainEmailMatch) {
+      addToast('Alamat email tidak terdaftar.', 'error');
+      return { success: false, message: 'Alamat email tidak terdaftar dalam sistem.' };
     }
 
-    // Fallback: allow sign in with any valid email & password for convenience
-    const profileToUse: User = {
-      ...currentSavedProfile,
-      email: normalizedEmail,
-    };
-    setCurrentUser(profileToUse);
-    setCurrentUserId(profileToUse.id);
-    setUsers([profileToUse]);
-    setIsAuthenticated(true);
-    localStorage.setItem('pur_is_authenticated_v1', 'true');
-    localStorage.setItem('pur_user_profile_v1', JSON.stringify(profileToUse));
-    addToast(`Selamat datang di PUR INVENTORY, ${profileToUse.name}!`, 'success');
-    return { success: true };
+    if (!isPasswordMatch) {
+      addToast('Kata sandi yang Anda masukkan salah.', 'error');
+      return { success: false, message: 'Kata sandi tidak sesuai. Silakan periksa kembali kata sandi Anda.' };
+    }
+
+    return { success: false, message: 'Gagal melakukan login. Silakan periksa kembali email dan kata sandi Anda.' };
   };
 
   const signUp = async (email: string, password?: string) => {
@@ -392,6 +385,12 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   };
 
   const changePassword = async (oldPassword: string, newPassword: string) => {
+    const currentSavedPassword = getStoredPassword();
+    if (oldPassword && oldPassword.trim() !== currentSavedPassword) {
+      addToast('Kata sandi saat ini tidak sesuai.', 'error');
+      return { success: false, message: 'Kata sandi saat ini tidak sesuai.' };
+    }
+
     if (!newPassword || newPassword.length < 5) {
       addToast('Kata sandi baru minimal 5 karakter.', 'error');
       return { success: false, message: 'Kata sandi baru minimal 5 karakter.' };
@@ -680,6 +679,41 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
     addToast('Data souvenir berhasil diperbarui.');
     return { success: true };
+  };
+
+  const toggleArchiveSouvenir = (id: string) => {
+    if (!isAdmin) {
+      return { success: false, message: 'Hanya Admin yang dapat mengarsipkan souvenir.' };
+    }
+    const souv = souvenirs.find((s) => s.id === id);
+    if (!souv) {
+      return { success: false, message: 'Souvenir tidak ditemukan.' };
+    }
+
+    const nextArchivedState = !souv.isArchived;
+    setSouvenirs((prev) =>
+      prev.map((s) =>
+        s.id === id
+          ? {
+              ...s,
+              isArchived: nextArchivedState,
+              updatedAt: new Date().toISOString(),
+            }
+          : s
+      )
+    );
+
+    dbUpdateSouvenir(id, { isArchived: nextArchivedState }).catch((err) => {
+      console.error('Error updating archive status in Firestore:', err);
+    });
+
+    if (nextArchivedState) {
+      addToast(`Souvenir "${souv.name}" telah diarsipkan/dinonaktifkan.`);
+    } else {
+      addToast(`Souvenir "${souv.name}" telah diaktifkan kembali.`);
+    }
+
+    return { success: true, isArchived: nextArchivedState };
   };
 
   const deleteSouvenir = (id: string) => {
@@ -1200,6 +1234,7 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     deleteCategory,
     addSouvenir,
     updateSouvenir,
+    toggleArchiveSouvenir,
     deleteSouvenir,
     addActivity,
     updateActivity,

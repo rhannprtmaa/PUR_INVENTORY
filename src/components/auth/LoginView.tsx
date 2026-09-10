@@ -190,7 +190,6 @@ export const LoginView: React.FC = () => {
                 >
                   Lupa password?
                 </button>
-                <span className="text-[11px] text-slate-400">Akun Dummy Bawaan</span>
               </div>
 
               {/* Submit Button */}
@@ -229,9 +228,9 @@ export const LoginView: React.FC = () => {
               <KeyRound className="w-6 h-6" />
             </div>
             <div className="text-center">
-              <h3 className="text-base font-bold text-slate-900">Bantuan Reset Password</h3>
+              <h3 className="text-base font-bold text-slate-900">Bantuan Akses Akun</h3>
               <p className="text-xs text-slate-500 mt-1.5 leading-relaxed">
-                Akun default: <strong>purinventorybi@gmail.com</strong> dengan kata sandi <strong>admin123</strong>. Anda dapat mengganti identitas dan sandi kapan pun di halaman Profil.
+                Akun Utama Sistem: <strong>purinventorybi@gmail.com</strong> dengan kata sandi awal <strong>admin123</strong> (atau kata sandi baru yang telah Anda perbarui di menu Profil).
               </p>
             </div>
             <div className="pt-2">

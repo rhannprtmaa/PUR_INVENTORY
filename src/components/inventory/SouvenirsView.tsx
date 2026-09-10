@@ -18,10 +18,12 @@ import {
   ChevronLeft,
   ChevronRight,
   Filter,
+  Archive,
+  ArchiveRestore,
 } from 'lucide-react';
 import { useInventory } from '../../context/InventoryContext';
 import { Souvenir, StockStatus } from '../../types';
-import { StockBadge } from '../common/Badge';
+import { StockBadge, ArchiveBadge } from '../common/Badge';
 import { ConfirmModal } from '../common/ConfirmModal';
 import { exportStockSummaryPDF, exportStockSummaryExcel } from '../../utils/exportUtils';
 
@@ -38,6 +40,7 @@ export const SouvenirsView: React.FC<SouvenirsViewProps> = ({ onSelectSouvenirDe
     stockSummaries,
     addSouvenir,
     updateSouvenir,
+    toggleArchiveSouvenir,
     deleteSouvenir,
     isAdmin,
     currentUser,
@@ -48,19 +51,23 @@ export const SouvenirsView: React.FC<SouvenirsViewProps> = ({ onSelectSouvenirDe
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('ALL');
   const [selectedStatus, setSelectedStatus] = useState<'ALL' | StockStatus>('ALL');
+  const [archiveFilter, setArchiveFilter] = useState<'ACTIVE' | 'ARCHIVED' | 'ALL'>('ACTIVE');
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 8;
 
   // Popover controls
   const [isCategoryOpen, setIsCategoryOpen] = useState(false);
   const [isStatusOpen, setIsStatusOpen] = useState(false);
+  const [isArchiveOpen, setIsArchiveOpen] = useState(false);
   const categoryPopoverRef = useRef<HTMLDivElement>(null);
   const statusPopoverRef = useRef<HTMLDivElement>(null);
+  const archivePopoverRef = useRef<HTMLDivElement>(null);
 
   // Modal states
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [editingSouvenir, setEditingSouvenir] = useState<Souvenir | null>(null);
   const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
+  const [archiveTarget, setArchiveTarget] = useState<Souvenir | null>(null);
 
   // Form states for Add / Edit
   const [name, setName] = useState('');
@@ -69,6 +76,7 @@ export const SouvenirsView: React.FC<SouvenirsViewProps> = ({ onSelectSouvenirDe
   const [customUnit, setCustomUnit] = useState('');
   const [minimumStock, setMinimumStock] = useState<number>(10);
   const [description, setDescription] = useState('');
+  const [isArchived, setIsArchived] = useState(false);
   const [formError, setFormError] = useState('');
 
   // Click outside to close popovers
@@ -81,15 +89,24 @@ export const SouvenirsView: React.FC<SouvenirsViewProps> = ({ onSelectSouvenirDe
       if (statusPopoverRef.current && !statusPopoverRef.current.contains(target)) {
         setIsStatusOpen(false);
       }
+      if (archivePopoverRef.current && !archivePopoverRef.current.contains(target)) {
+        setIsArchiveOpen(false);
+      }
     };
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  // Summary Metrics
-  const totalJenisSouvenir = souvenirs.length;
+  // Summary Metrics (Active souvenirs count)
+  const activeSouvenirs = useMemo(() => souvenirs.filter((s) => !s.isArchived), [souvenirs]);
+  const archivedSouvenirs = useMemo(() => souvenirs.filter((s) => s.isArchived), [souvenirs]);
+
+  const totalJenisSouvenir = activeSouvenirs.length;
   const totalSisaStok = useMemo(
-    () => stockSummaries.reduce((acc, it) => acc + it.currentStock, 0),
+    () =>
+      stockSummaries
+        .filter((it) => !it.souvenir.isArchived)
+        .reduce((acc, it) => acc + it.currentStock, 0),
     [stockSummaries]
   );
   const totalMasuk = useMemo(
@@ -118,9 +135,16 @@ export const SouvenirsView: React.FC<SouvenirsViewProps> = ({ onSelectSouvenirDe
       const matchStatus =
         selectedStatus === 'ALL' || item.status === selectedStatus;
 
-      return matchSearch && matchCategory && matchStatus;
+      let matchArchive = true;
+      if (archiveFilter === 'ACTIVE') {
+        matchArchive = !item.souvenir.isArchived;
+      } else if (archiveFilter === 'ARCHIVED') {
+        matchArchive = Boolean(item.souvenir.isArchived);
+      }
+
+      return matchSearch && matchCategory && matchStatus && matchArchive;
     });
-  }, [stockSummaries, searchTerm, selectedCategory, selectedStatus]);
+  }, [stockSummaries, searchTerm, selectedCategory, selectedStatus, archiveFilter]);
 
   // Pagination
   const totalPages = Math.ceil(filteredSouvenirs.length / itemsPerPage) || 1;
@@ -137,6 +161,7 @@ export const SouvenirsView: React.FC<SouvenirsViewProps> = ({ onSelectSouvenirDe
     setCustomUnit('');
     setMinimumStock(10);
     setDescription('');
+    setIsArchived(false);
     setFormError('');
     setIsAddModalOpen(true);
   };
@@ -155,6 +180,7 @@ export const SouvenirsView: React.FC<SouvenirsViewProps> = ({ onSelectSouvenirDe
     }
     setMinimumStock(s.minimumStock);
     setDescription(s.description || '');
+    setIsArchived(Boolean(s.isArchived));
     setFormError('');
   };
 
@@ -208,6 +234,7 @@ export const SouvenirsView: React.FC<SouvenirsViewProps> = ({ onSelectSouvenirDe
       unit: finalUnit,
       minimumStock: Number(minimumStock) || 0,
       description: description.trim(),
+      isArchived,
     });
 
     if (!res.success) {
@@ -217,6 +244,14 @@ export const SouvenirsView: React.FC<SouvenirsViewProps> = ({ onSelectSouvenirDe
 
     addToast('Data souvenir berhasil diperbarui.');
     setEditingSouvenir(null);
+  };
+
+  // Confirm Archive/Restore Toggle
+  const handleArchiveConfirm = () => {
+    if (archiveTarget) {
+      toggleArchiveSouvenir(archiveTarget.id);
+      setArchiveTarget(null);
+    }
   };
 
   // Confirm Delete
@@ -247,7 +282,11 @@ export const SouvenirsView: React.FC<SouvenirsViewProps> = ({ onSelectSouvenirDe
     });
   };
 
-  const hasActiveFilter = searchTerm !== '' || selectedCategory !== 'ALL' || selectedStatus !== 'ALL';
+  const hasActiveFilter =
+    searchTerm !== '' ||
+    selectedCategory !== 'ALL' ||
+    selectedStatus !== 'ALL' ||
+    archiveFilter !== 'ACTIVE';
 
   return (
     <div id="souvenirs-view-container" className="space-y-6 pb-12">
@@ -529,6 +568,117 @@ export const SouvenirsView: React.FC<SouvenirsViewProps> = ({ onSelectSouvenirDe
                 )}
               </div>
 
+              {/* Minimalist Archive / Status Aktif Filter */}
+              <div className="relative" ref={archivePopoverRef}>
+                <button
+                  id="btn-filter-archive-souvenirs"
+                  type="button"
+                  onClick={() => setIsArchiveOpen(!isArchiveOpen)}
+                  title={
+                    archiveFilter === 'ACTIVE'
+                      ? 'Filter: Hanya Souvenir Aktif'
+                      : archiveFilter === 'ARCHIVED'
+                      ? 'Filter: Hanya Souvenir Diarsipkan'
+                      : 'Filter: Semua (Aktif & Arsip)'
+                  }
+                  className={`relative flex items-center justify-center w-9 h-9 rounded-xl border transition-all cursor-pointer ${
+                    archiveFilter !== 'ACTIVE'
+                      ? 'bg-[#04457e] text-white border-[#04457e] shadow-sm ring-2 ring-[#04457e]/20'
+                      : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50 hover:text-slate-900 shadow-2xs'
+                  }`}
+                >
+                  <Archive className="w-4 h-4" />
+                  {archiveFilter !== 'ACTIVE' && (
+                    <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-amber-400 rounded-full border-2 border-white ring-1 ring-amber-500" />
+                  )}
+                </button>
+
+                {/* Archive Popover */}
+                {isArchiveOpen && (
+                  <div className="absolute right-0 top-full mt-2 w-56 bg-white rounded-2xl border border-slate-200 shadow-xl z-30 p-3 animate-in fade-in zoom-in-95 duration-150">
+                    <div className="flex items-center justify-between pb-2 border-b border-slate-100 mb-2">
+                      <div className="flex items-center gap-1.5 text-xs font-bold text-slate-800">
+                        <Archive className="w-3.5 h-3.5 text-[#04457e]" />
+                        <span>Status Aktif / Arsip</span>
+                      </div>
+                      {archiveFilter !== 'ACTIVE' && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setArchiveFilter('ACTIVE');
+                            setCurrentPage(1);
+                          }}
+                          className="text-[11px] font-semibold text-rose-500 hover:underline cursor-pointer"
+                        >
+                          Reset
+                        </button>
+                      )}
+                    </div>
+                    <div className="space-y-1">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setArchiveFilter('ACTIVE');
+                          setCurrentPage(1);
+                          setIsArchiveOpen(false);
+                        }}
+                        className={`w-full text-left px-3 py-1.5 rounded-lg text-xs font-medium flex items-center justify-between cursor-pointer transition-colors ${
+                          archiveFilter === 'ACTIVE'
+                            ? 'bg-[#04457e]/10 text-[#04457e] font-bold'
+                            : 'text-slate-600 hover:bg-slate-50'
+                        }`}
+                      >
+                        <span>Hanya Aktif (Default)</span>
+                        {archiveFilter === 'ACTIVE' && (
+                          <Check className="w-3.5 h-3.5 text-[#04457e] flex-shrink-0" />
+                        )}
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setArchiveFilter('ARCHIVED');
+                          setCurrentPage(1);
+                          setIsArchiveOpen(false);
+                        }}
+                        className={`w-full text-left px-3 py-1.5 rounded-lg text-xs font-medium flex items-center justify-between cursor-pointer transition-colors ${
+                          archiveFilter === 'ARCHIVED'
+                            ? 'bg-[#04457e]/10 text-[#04457e] font-bold'
+                            : 'text-slate-600 hover:bg-slate-50'
+                        }`}
+                      >
+                        <span className="flex items-center gap-1.5">
+                          <Archive className="w-3 h-3 text-slate-400" />
+                          Diarsipkan (Nonaktif)
+                        </span>
+                        {archiveFilter === 'ARCHIVED' && (
+                          <Check className="w-3.5 h-3.5 text-[#04457e] flex-shrink-0" />
+                        )}
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setArchiveFilter('ALL');
+                          setCurrentPage(1);
+                          setIsArchiveOpen(false);
+                        }}
+                        className={`w-full text-left px-3 py-1.5 rounded-lg text-xs font-medium flex items-center justify-between cursor-pointer transition-colors ${
+                          archiveFilter === 'ALL'
+                            ? 'bg-[#04457e]/10 text-[#04457e] font-bold'
+                            : 'text-slate-600 hover:bg-slate-50'
+                        }`}
+                      >
+                        <span>Semua (Aktif & Arsip)</span>
+                        {archiveFilter === 'ALL' && (
+                          <Check className="w-3.5 h-3.5 text-[#04457e] flex-shrink-0" />
+                        )}
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+
               {/* Reset Filter Button */}
               {hasActiveFilter && (
                 <button
@@ -538,6 +688,7 @@ export const SouvenirsView: React.FC<SouvenirsViewProps> = ({ onSelectSouvenirDe
                     setSearchTerm('');
                     setSelectedCategory('ALL');
                     setSelectedStatus('ALL');
+                    setArchiveFilter('ACTIVE');
                     setCurrentPage(1);
                   }}
                   title="Reset Filter"

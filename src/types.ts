@@ -28,6 +28,7 @@ export interface Souvenir {
   unit: string; // e.g. 'pcs', 'box', 'rim', 'set', 'paket', 'buah'
   minimumStock: number;
   description?: string;
+  isArchived?: boolean;
   createdByUid?: string;
   createdByName?: string;
   createdAt: string;
