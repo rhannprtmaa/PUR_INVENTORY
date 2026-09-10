@@ -310,15 +310,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   {currentUser.name}
                 </p>
                 <div className="flex items-center gap-1.5 mt-0.5">
-                  {isAdmin ? (
-                    <span className="inline-flex items-center gap-0.5 text-[9px] font-bold px-1.5 py-0.2 rounded bg-sky-400/20 text-sky-200 border border-sky-300/30">
-                      <ShieldCheck className="w-2.5 h-2.5" /> ADMIN
-                    </span>
-                  ) : (
-                    <span className="inline-flex items-center gap-0.5 text-[9px] font-bold px-1.5 py-0.2 rounded bg-white/15 text-sky-100 border border-white/20">
-                      <UserCheck className="w-2.5 h-2.5" /> STAFF
-                    </span>
-                  )}
+                  <span className="inline-flex items-center gap-0.5 text-[9px] font-bold px-1.5 py-0.2 rounded bg-sky-400/20 text-sky-200 border border-sky-300/30">
+                    <ShieldCheck className="w-2.5 h-2.5" /> PENGELOLA
+                  </span>
                   <span className="text-[10px] text-sky-200/80 truncate">
                     {currentUser.department?.split(' ')[0]}
                   </span>

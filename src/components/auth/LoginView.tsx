@@ -1,29 +1,39 @@
 import React, { useState } from 'react';
-import { Eye, EyeOff, KeyRound } from 'lucide-react';
+import { Eye, EyeOff, KeyRound, LogIn } from 'lucide-react';
 import { useInventory } from '../../context/InventoryContext';
 
 export const LoginView: React.FC = () => {
   const { login } = useInventory();
   const [email, setEmail] = useState('purinventorybi@gmail.com');
-  const [password, setPassword] = useState('••••••••');
+  const [password, setPassword] = useState('admin123');
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
   const [showForgotModal, setShowForgotModal] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg('');
     if (!email.trim()) {
       setErrorMsg('Silakan masukkan alamat email.');
       return;
     }
+    if (!password) {
+      setErrorMsg('Silakan masukkan kata sandi.');
+      return;
+    }
 
     setIsLoading(true);
-    setTimeout(() => {
-      login(email, password);
+    try {
+      const res = await login(email, password);
+      if (!res.success) {
+        setErrorMsg(res.message || 'Login gagal. Periksa email dan kata sandi Anda.');
+      }
+    } catch (err: any) {
+      setErrorMsg(err?.message || 'Terjadi kesalahan saat login.');
+    } finally {
       setIsLoading(false);
-    }, 400);
+    }
   };
 
   return (
@@ -104,15 +114,22 @@ export const LoginView: React.FC = () => {
                     SULSEL
                   </span>
                 </div>
-                <p className="text-[9px] font-semibold text-slate-500 uppercase tracking-tighter">
-                  Pengelolaan Uang Rupiah &amp; Logistik Souvenir
-                </p>
+                <p className="text-[9px] font-semibold text-slate-500 uppercase tracking-tighter">Logistik Souvenir</p>
               </div>
             </div>
           </div>
 
           {/* Login Card */}
           <div className="w-full bg-white rounded-3xl shadow-xl shadow-slate-200/60 border border-slate-100 p-6 sm:p-8">
+            <div className="mb-6 text-left">
+              <h2 className="text-xl font-bold text-slate-900 tracking-tight">
+                Selamat Datang
+              </h2>
+              <p className="text-xs text-slate-500 mt-1">
+                Silakan masuk untuk mengakses sistem inventaris PUR
+              </p>
+            </div>
+
             <form onSubmit={handleSubmit} className="space-y-4">
               {/* Error Message */}
               {errorMsg && (
@@ -165,14 +182,15 @@ export const LoginView: React.FC = () => {
               </div>
 
               {/* Forgot Password Link */}
-              <div className="flex items-center justify-start pt-1">
+              <div className="flex items-center justify-between pt-0.5">
                 <button
                   type="button"
                   onClick={() => setShowForgotModal(true)}
                   className="text-xs font-semibold text-sky-700 hover:text-[#04457e] hover:underline cursor-pointer transition-colors"
                 >
-                  Forgot password?
+                  Lupa password?
                 </button>
+                <span className="text-[11px] text-slate-400">Akun Dummy Bawaan</span>
               </div>
 
               {/* Submit Button */}
@@ -186,7 +204,10 @@ export const LoginView: React.FC = () => {
                   {isLoading ? (
                     <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                   ) : (
-                    'Sign In'
+                    <>
+                      <LogIn className="w-4 h-4" />
+                      <span>Sign In</span>
+                    </>
                   )}
                 </button>
               </div>
@@ -210,7 +231,7 @@ export const LoginView: React.FC = () => {
             <div className="text-center">
               <h3 className="text-base font-bold text-slate-900">Bantuan Reset Password</h3>
               <p className="text-xs text-slate-500 mt-1.5 leading-relaxed">
-                Untuk keperluan reset kredensial akun internal Bank Indonesia, silakan hubungi Administrator IT atau login menggunakan akun terdaftar (purinventorybi@gmail.com).
+                Akun default: <strong>purinventorybi@gmail.com</strong> dengan kata sandi <strong>admin123</strong>. Anda dapat mengganti identitas dan sandi kapan pun di halaman Profil.
               </p>
             </div>
             <div className="pt-2">

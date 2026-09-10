@@ -1,4 +1,4 @@
-export type UserRole = 'admin' | 'staff';
+export type UserRole = 'admin';
 
 export interface User {
   id: string;
@@ -7,12 +7,16 @@ export interface User {
   role: UserRole;
   avatar?: string;
   department?: string;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface Category {
   id: string;
   name: string;
   description: string;
+  createdByUid?: string;
+  createdByName?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -24,6 +28,8 @@ export interface Souvenir {
   unit: string; // e.g. 'pcs', 'box', 'rim', 'set', 'paket', 'buah'
   minimumStock: number;
   description?: string;
+  createdByUid?: string;
+  createdByName?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -35,6 +41,8 @@ export interface Activity {
   activityDate: string; // YYYY-MM-DD
   location: string;
   description: string;
+  createdByUid?: string;
+  createdByName?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -47,6 +55,8 @@ export interface InventoryIn {
   quantity: number;
   description: string;
   createdBy?: string;
+  createdByUid?: string;
+  createdByName?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -66,6 +76,8 @@ export interface InventoryOut {
   date: string; // YYYY-MM-DD
   description: string;
   createdBy?: string;
+  createdByUid?: string;
+  createdByName?: string;
   items?: InventoryOutItem[];
   createdAt: string;
   updatedAt: string;

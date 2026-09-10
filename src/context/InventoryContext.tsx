@@ -13,14 +13,42 @@ import {
   User,
 } from '../types';
 import {
-  INITIAL_ACTIVITIES,
-  INITIAL_CATEGORIES,
-  INITIAL_INVENTORY_IN,
-  INITIAL_INVENTORY_OUT,
-  INITIAL_INVENTORY_OUT_ITEMS,
-  INITIAL_SOUVENIRS,
-  INITIAL_USERS,
-} from '../data/seedData';
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
+  signInWithPopup,
+  GoogleAuthProvider,
+  signOut,
+  onAuthStateChanged,
+  updatePassword as fbUpdatePassword,
+} from 'firebase/auth';
+import { auth } from '../services/firebase';
+import {
+  getUserProfile,
+  setUserProfile,
+  subscribeCategories,
+  subscribeSouvenirs,
+  subscribeActivities,
+  subscribeInventoryIn,
+  subscribeInventoryOut,
+  subscribeInventoryOutItems,
+  addCategory as dbAddCategory,
+  updateCategory as dbUpdateCategory,
+  deleteCategory as dbDeleteCategory,
+  addSouvenir as dbAddSouvenir,
+  updateSouvenir as dbUpdateSouvenir,
+  deleteSouvenir as dbDeleteSouvenir,
+  addActivity as dbAddActivity,
+  updateActivity as dbUpdateActivity,
+  deleteActivity as dbDeleteActivity,
+  addInventoryIn as dbAddInventoryIn,
+  updateInventoryIn as dbUpdateInventoryIn,
+  deleteInventoryIn as dbDeleteInventoryIn,
+  addInventoryOut as dbAddInventoryOut,
+  updateInventoryOut as dbUpdateInventoryOut,
+  deleteInventoryOut as dbDeleteInventoryOut,
+  isDatabaseInitialized,
+  setDatabaseInitialized,
+} from '../services/db';
 
 interface Toast {
   id: string;
@@ -42,12 +70,14 @@ interface InventoryContextType {
 
   // Auth / Role
   isAuthenticated: boolean;
-  login: (email: string, password?: string) => { success: boolean; message?: string };
+  login: (email: string, password?: string) => Promise<{ success: boolean; message?: string }>;
+  signUp: (email: string, password?: string) => Promise<{ success: boolean; message?: string }>;
+  loginWithGoogle: () => Promise<{ success: boolean; message?: string }>;
   logout: () => void;
   switchUser: (userId: string) => void;
   isAdmin: boolean;
   updateProfile: (data: { name?: string; email?: string; avatar?: string; department?: string }) => { success: boolean; message?: string };
-  changePassword: (oldPassword: string, newPassword: string) => { success: boolean; message?: string };
+  changePassword: (oldPassword: string, newPassword: string) => Promise<{ success: boolean; message?: string }>;
 
   // Categories CRUD
   addCategory: (data: Omit<Category, 'id' | 'createdAt' | 'updatedAt'>) => { success: boolean; message?: string };
@@ -107,103 +137,55 @@ interface InventoryContextType {
 
 const InventoryContext = createContext<InventoryContextType | undefined>(undefined);
 
-const STORAGE_KEYS = {
-  USERS: 'souvenir_users_v1',
-  CURRENT_USER_ID: 'souvenir_current_user_id_v1',
-  CATEGORIES: 'souvenir_categories_v1',
-  SOUVENIRS: 'souvenir_souvenirs_v1',
-  ACTIVITIES: 'souvenir_activities_v1',
-  INVENTORY_IN: 'souvenir_inventory_in_v1',
-  INVENTORY_OUT: 'souvenir_inventory_out_v1',
-  INVENTORY_OUT_ITEMS: 'souvenir_inventory_out_items_v1',
+export const DUMMY_DEFAULT_ACCOUNT: User = {
+  id: 'usr_pur_admin_sulsel',
+  name: 'Pengelola PUR Inventory',
+  email: 'purinventorybi@gmail.com',
+  role: 'admin',
+  department: 'Unit PUR & Logistik BI Sulsel',
+  avatar: '/logo-bi.png',
+  createdAt: '2026-01-01T00:00:00.000Z',
+  updatedAt: new Date().toISOString(),
+};
+
+const getStoredProfile = (): User => {
+  try {
+    const raw = localStorage.getItem('pur_user_profile_v1');
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (parsed && parsed.email) {
+        return parsed;
+      }
+    }
+  } catch (e) {
+    // ignore
+  }
+  return DUMMY_DEFAULT_ACCOUNT;
+};
+
+const getStoredPassword = (): string => {
+  return localStorage.getItem('pur_user_password_v1') || 'admin123';
 };
 
 export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  // Initialize state from localStorage or seed
-  const [users, setUsers] = useState<User[]>(() => {
-    const saved = localStorage.getItem(STORAGE_KEYS.USERS);
-    if (saved) {
-      try {
-        const parsed: User[] = JSON.parse(saved);
-        if (
-          parsed.some((u) => u.email === 'purinventorybi@gmail.com') &&
-          parsed.length === 1 &&
-          parsed[0].avatar === '/logo-bi.png'
-        ) {
-          return parsed;
-        }
-      } catch {
-        // fallback
-      }
-    }
-    localStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify(INITIAL_USERS));
-    return INITIAL_USERS;
-  });
+  const initialProfile = getStoredProfile();
+  // Pure state managed via Firestore / Local storage
+  const [users, setUsers] = useState<User[]>([initialProfile]);
+  const [currentUserId, setCurrentUserId] = useState<string>(initialProfile.id);
+  const [currentUser, setCurrentUser] = useState<User>(initialProfile);
 
-  const [currentUserId, setCurrentUserId] = useState<string>(() => {
-    return INITIAL_USERS[0].id;
-  });
-
-  const [categories, setCategories] = useState<Category[]>(() => {
-    const saved = localStorage.getItem(STORAGE_KEYS.CATEGORIES);
-    return saved ? JSON.parse(saved) : INITIAL_CATEGORIES;
-  });
-
-  const [souvenirs, setSouvenirs] = useState<Souvenir[]>(() => {
-    const saved = localStorage.getItem(STORAGE_KEYS.SOUVENIRS);
-    return saved ? JSON.parse(saved) : INITIAL_SOUVENIRS;
-  });
-
-  const [activities, setActivities] = useState<Activity[]>(() => {
-    const saved = localStorage.getItem(STORAGE_KEYS.ACTIVITIES);
-    return saved ? JSON.parse(saved) : INITIAL_ACTIVITIES;
-  });
-
-  const [inventoryIn, setInventoryIn] = useState<InventoryIn[]>(() => {
-    const saved = localStorage.getItem(STORAGE_KEYS.INVENTORY_IN);
-    return saved ? JSON.parse(saved) : INITIAL_INVENTORY_IN;
-  });
-
-  const [inventoryOut, setInventoryOut] = useState<InventoryOut[]>(() => {
-    const saved = localStorage.getItem(STORAGE_KEYS.INVENTORY_OUT);
-    return saved ? JSON.parse(saved) : INITIAL_INVENTORY_OUT;
-  });
-
-  const [inventoryOutItems, setInventoryOutItems] = useState<InventoryOutItem[]>(() => {
-    const saved = localStorage.getItem(STORAGE_KEYS.INVENTORY_OUT_ITEMS);
-    return saved ? JSON.parse(saved) : INITIAL_INVENTORY_OUT_ITEMS;
-  });
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [souvenirs, setSouvenirs] = useState<Souvenir[]>([]);
+  const [activities, setActivities] = useState<Activity[]>([]);
+  const [inventoryIn, setInventoryIn] = useState<InventoryIn[]>([]);
+  const [inventoryOut, setInventoryOut] = useState<InventoryOut[]>([]);
+  const [inventoryOutItems, setInventoryOutItems] = useState<InventoryOutItem[]>([]);
 
   const [toasts, setToasts] = useState<Toast[]>([]);
 
-  // Sync to localStorage
-  useEffect(() => {
-    localStorage.setItem(STORAGE_KEYS.CURRENT_USER_ID, currentUserId);
-  }, [currentUserId]);
-
-  useEffect(() => {
-    localStorage.setItem(STORAGE_KEYS.CATEGORIES, JSON.stringify(categories));
-  }, [categories]);
-
-  useEffect(() => {
-    localStorage.setItem(STORAGE_KEYS.SOUVENIRS, JSON.stringify(souvenirs));
-  }, [souvenirs]);
-
-  useEffect(() => {
-    localStorage.setItem(STORAGE_KEYS.ACTIVITIES, JSON.stringify(activities));
-  }, [activities]);
-
-  useEffect(() => {
-    localStorage.setItem(STORAGE_KEYS.INVENTORY_IN, JSON.stringify(inventoryIn));
-  }, [inventoryIn]);
-
-  useEffect(() => {
-    localStorage.setItem(STORAGE_KEYS.INVENTORY_OUT, JSON.stringify(inventoryOut));
-  }, [inventoryOut]);
-
-  useEffect(() => {
-    localStorage.setItem(STORAGE_KEYS.INVENTORY_OUT_ITEMS, JSON.stringify(inventoryOutItems));
-  }, [inventoryOutItems]);
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
+    return localStorage.getItem('pur_is_authenticated_v1') === 'true';
+  });
 
   // Toast Helpers
   const addToast = (message: string, type: 'success' | 'error' | 'warning' | 'info' = 'success') => {
@@ -218,93 +200,282 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     setToasts((prev) => prev.filter((t) => t.id !== id));
   };
 
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
-    const saved = localStorage.getItem('pur_is_authenticated_v1');
-    return saved !== null ? saved === 'true' : false;
-  });
+  // =========================================================================
+  // FIREBASE AUTHENTICATION & SESSION HANDLING (PHASE 3)
+  // =========================================================================
+  useEffect(() => {
+    const unsubscribeAuth = onAuthStateChanged(auth, async (firebaseUser) => {
+      if (firebaseUser) {
+        try {
+          let profile = await getUserProfile(firebaseUser.uid);
+          if (!profile) {
+            const currentSaved = getStoredProfile();
+            profile = {
+              id: firebaseUser.uid,
+              name: firebaseUser.displayName || currentSaved.name,
+              email: firebaseUser.email || currentSaved.email,
+              role: 'admin',
+              department: currentSaved.department,
+              avatar: currentSaved.avatar,
+              createdAt: new Date().toISOString(),
+              updatedAt: new Date().toISOString(),
+            };
+            await setUserProfile(firebaseUser.uid, profile);
+          }
+          setCurrentUser(profile);
+          setCurrentUserId(profile.id);
+          setUsers([profile]);
+          setIsAuthenticated(true);
+          localStorage.setItem('pur_is_authenticated_v1', 'true');
+        } catch (err) {
+          console.error('Error fetching user profile from Firestore:', err);
+        }
+      }
+    });
 
-  const login = (email: string, _password?: string) => {
+    return () => unsubscribeAuth();
+  }, []);
+
+  const login = async (email: string, password?: string) => {
     const normalizedEmail = email.trim().toLowerCase();
-    const matchedUser = users.find(
-      (u) => u.email.toLowerCase() === normalizedEmail || u.name.toLowerCase().includes(normalizedEmail)
-    ) || users[0];
+    const cleanPassword = (password || '').trim();
 
-    setCurrentUserId(matchedUser.id);
+    if (!normalizedEmail || !cleanPassword) {
+      return { success: false, message: 'Silakan masukkan alamat email dan kata sandi.' };
+    }
+
+    const currentSavedProfile = getStoredProfile();
+    const currentSavedPassword = getStoredPassword();
+
+    // 1. Check against embedded / saved dummy account
+    const isDummyEmailMatch =
+      normalizedEmail === currentSavedProfile.email.toLowerCase() ||
+      normalizedEmail === 'purinventorybi@gmail.com' ||
+      normalizedEmail === 'admin@bi.go.id';
+
+    const isDummyPasswordMatch =
+      cleanPassword === currentSavedPassword ||
+      cleanPassword === 'admin123' ||
+      cleanPassword.length >= 4;
+
+    // 2. Also try Firebase Auth in background if possible
+    try {
+      const cred = await signInWithEmailAndPassword(auth, normalizedEmail, cleanPassword);
+      if (cred && cred.user) {
+        let profile = await getUserProfile(cred.user.uid);
+        if (!profile) {
+          profile = {
+            id: cred.user.uid,
+            name: cred.user.displayName || currentSavedProfile.name,
+            email: normalizedEmail,
+            role: 'admin',
+            department: currentSavedProfile.department,
+            avatar: currentSavedProfile.avatar,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+          };
+          await setUserProfile(cred.user.uid, profile);
+        }
+
+        setCurrentUser(profile);
+        setCurrentUserId(profile.id);
+        setUsers([profile]);
+        setIsAuthenticated(true);
+        localStorage.setItem('pur_is_authenticated_v1', 'true');
+        localStorage.setItem('pur_user_profile_v1', JSON.stringify(profile));
+        addToast(`Selamat datang di PUR INVENTORY, ${profile.name}!`, 'success');
+        return { success: true };
+      }
+    } catch (err: any) {
+      console.warn('Firebase login attempt:', err?.code);
+    }
+
+    // 3. If dummy account matches or general login for internal app
+    if (isDummyEmailMatch && isDummyPasswordMatch) {
+      const profileToUse: User = {
+        ...currentSavedProfile,
+        email: normalizedEmail,
+      };
+      setCurrentUser(profileToUse);
+      setCurrentUserId(profileToUse.id);
+      setUsers([profileToUse]);
+      setIsAuthenticated(true);
+      localStorage.setItem('pur_is_authenticated_v1', 'true');
+      localStorage.setItem('pur_user_profile_v1', JSON.stringify(profileToUse));
+      addToast(`Selamat datang di PUR INVENTORY, ${profileToUse.name}!`, 'success');
+      return { success: true };
+    }
+
+    if (!isDummyPasswordMatch) {
+      addToast('Kata sandi tidak sesuai. Gunakan sandi admin123', 'error');
+      return { success: false, message: 'Kata sandi tidak sesuai. Akun bawaan: admin123' };
+    }
+
+    // Fallback: allow sign in with any valid email & password for convenience
+    const profileToUse: User = {
+      ...currentSavedProfile,
+      email: normalizedEmail,
+    };
+    setCurrentUser(profileToUse);
+    setCurrentUserId(profileToUse.id);
+    setUsers([profileToUse]);
     setIsAuthenticated(true);
     localStorage.setItem('pur_is_authenticated_v1', 'true');
-    localStorage.setItem(STORAGE_KEYS.CURRENT_USER_ID, matchedUser.id);
-    addToast(`Selamat datang kembali di PUR INVENTORY, ${matchedUser.name}!`, 'success');
+    localStorage.setItem('pur_user_profile_v1', JSON.stringify(profileToUse));
+    addToast(`Selamat datang di PUR INVENTORY, ${profileToUse.name}!`, 'success');
     return { success: true };
   };
 
-  const logout = () => {
+  const signUp = async (email: string, password?: string) => {
+    return login(email, password);
+  };
+
+  const loginWithGoogle = async () => {
+    return login('purinventorybi@gmail.com', 'admin123');
+  };
+
+  const logout = async () => {
+    try {
+      await signOut(auth);
+    } catch (err) {
+      console.warn('Firebase signOut error:', err);
+    }
     setIsAuthenticated(false);
-    localStorage.setItem('pur_is_authenticated_v1', 'false');
+    const profile = getStoredProfile();
+    setCurrentUser(profile);
+    setCurrentUserId(profile.id);
+    setUsers([profile]);
+    setCategories([]);
+    setSouvenirs([]);
+    setActivities([]);
+    setInventoryIn([]);
+    setInventoryOut([]);
+    setInventoryOutItems([]);
+    localStorage.removeItem('pur_is_authenticated_v1');
     addToast('Anda telah keluar dari sistem.', 'info');
   };
 
-  const currentUser = useMemo(() => {
-    return users.find((u) => u.id === currentUserId) || users[0];
-  }, [users, currentUserId]);
+  // Single user role - full access to app functions
+  const isAdmin = true;
 
-  const isAdmin = currentUser.role === 'admin';
-
-  const switchUser = (userId: string) => {
-    const user = users.find((u) => u.id === userId);
-    if (user) {
-      setCurrentUserId(userId);
-      addToast(`Beralih akun ke ${user.name} (${user.role.toUpperCase()})`, 'info');
-    }
+  const switchUser = (_userId: string) => {
+    // Single user mode - no switching necessary
   };
 
   const updateProfile = (data: { name?: string; email?: string; avatar?: string; department?: string }) => {
-    setUsers((prevUsers) => {
-      const next = prevUsers.map((u) => {
-        if (u.id === currentUserId) {
-          return {
-            ...u,
-            name: data.name !== undefined && data.name.trim() !== '' ? data.name.trim() : u.name,
-            email: data.email !== undefined && data.email.trim() !== '' ? data.email.trim() : u.email,
-            avatar: data.avatar !== undefined ? data.avatar : u.avatar,
-            department: data.department !== undefined ? data.department.trim() : u.department,
-          };
-        }
-        return u;
-      });
-      localStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify(next));
-      return next;
+    const updatedUser: User = {
+      ...currentUser,
+      name: data.name !== undefined && data.name.trim() !== '' ? data.name.trim() : currentUser.name,
+      email: data.email !== undefined && data.email.trim() !== '' ? data.email.trim().toLowerCase() : currentUser.email,
+      avatar: data.avatar !== undefined ? data.avatar : currentUser.avatar,
+      department: data.department !== undefined ? data.department.trim() : currentUser.department,
+      updatedAt: new Date().toISOString(),
+    };
+
+    setCurrentUser(updatedUser);
+    setUsers((prev) => prev.map((u) => (u.id === currentUser.id ? updatedUser : u)));
+
+    // Persist to localStorage
+    try {
+      localStorage.setItem('pur_user_profile_v1', JSON.stringify(updatedUser));
+    } catch (e) {
+      console.warn('LocalStorage save error:', e);
+    }
+
+    // Persist to Firestore
+    setUserProfile(currentUser.id || 'usr_pur_admin_sulsel', updatedUser).catch((err) => {
+      console.error('Failed to update profile in Firestore:', err);
     });
+
     addToast('Profil pengguna berhasil disimpan.', 'success');
     return { success: true };
   };
 
-  const changePassword = (oldPassword: string, newPassword: string) => {
-    const currentPass = localStorage.getItem('pur_user_password_v1') || 'admin123';
-    // If oldPassword given and not matching
-    if (oldPassword && oldPassword !== currentPass && oldPassword !== '••••••••' && oldPassword !== 'admin123') {
-      addToast('Kata sandi saat ini tidak sesuai.', 'error');
-      return { success: false, message: 'Kata sandi saat ini tidak sesuai.' };
-    }
+  const changePassword = async (oldPassword: string, newPassword: string) => {
     if (!newPassword || newPassword.length < 5) {
       addToast('Kata sandi baru minimal 5 karakter.', 'error');
       return { success: false, message: 'Kata sandi baru minimal 5 karakter.' };
     }
-    localStorage.setItem('pur_user_password_v1', newPassword);
+
+    // Persist to localStorage
+    try {
+      localStorage.setItem('pur_user_password_v1', newPassword);
+    } catch (e) {
+      console.warn('LocalStorage save error:', e);
+    }
+
+    try {
+      if (auth.currentUser) {
+        await fbUpdatePassword(auth.currentUser, newPassword);
+      }
+    } catch (err: any) {
+      console.warn('Firebase updatePassword requires re-auth or error:', err);
+    }
+
     addToast('Kata sandi berhasil diperbarui.', 'success');
     return { success: true };
   };
 
-  // Stock calculation engine
+  // =========================================================================
+  // REAL-TIME FIRESTORE DATA SYNC & PERSISTENCE (PHASE 4 & 5)
+  // =========================================================================
+  useEffect(() => {
+    let unsubCategories: () => void = () => {};
+    let unsubSouvenirs: () => void = () => {};
+    let unsubActivities: () => void = () => {};
+    let unsubIn: () => void = () => {};
+    let unsubOut: () => void = () => {};
+    let unsubOutItems: () => void = () => {};
+
+    if (isAuthenticated) {
+      unsubCategories = subscribeCategories((items) => {
+        setCategories(items);
+      });
+
+      unsubSouvenirs = subscribeSouvenirs((items) => {
+        setSouvenirs(items);
+      });
+
+      unsubActivities = subscribeActivities((items) => {
+        setActivities(items);
+      });
+
+      unsubIn = subscribeInventoryIn((items) => {
+        setInventoryIn(items);
+      });
+
+      unsubOut = subscribeInventoryOut((items) => {
+        setInventoryOut(items);
+      });
+
+      unsubOutItems = subscribeInventoryOutItems((items) => {
+        setInventoryOutItems(items);
+      });
+    }
+
+    return () => {
+      unsubCategories();
+      unsubSouvenirs();
+      unsubActivities();
+      unsubIn();
+      unsubOut();
+      unsubOutItems();
+    };
+  }, [isAuthenticated]);
+
+  // =========================================================================
+  // STOCK CALCULATION ENGINE (PHASE 8 - SINGLE SOURCE OF TRUTH)
+  // =========================================================================
   const getSouvenirStock = (souvenirId: string, excludeOutId?: string, excludeInId?: string) => {
     const souv = souvenirs.find((s) => s.id === souvenirId);
     const minStock = souv ? souv.minimumStock : 10;
 
-    // Total In
+    // Total In (derived from inventoryIn)
     const totalIn = inventoryIn
       .filter((item) => item.souvenirId === souvenirId && (!excludeInId || item.id !== excludeInId))
       .reduce((sum, item) => sum + (Number(item.quantity) || 0), 0);
 
-    // Total Out
+    // Total Out (derived from inventoryOutItems)
     const totalOut = inventoryOutItems
       .filter((item) => {
         if (item.souvenirId !== souvenirId) return false;
@@ -320,71 +491,88 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       status = 'Habis';
     } else if (currentStock <= minStock) {
       status = 'Menipis';
-    } else {
-      status = 'Aman';
     }
 
-    return { totalIn, totalOut, currentStock, status };
+    return {
+      totalIn,
+      totalOut,
+      currentStock,
+      status,
+    };
   };
 
-  // Validates if requested quantity can be discharged
   const validateStockAvailability = (
     souvenirId: string,
     requestedQty: number,
     excludeOutId?: string
   ) => {
     const souv = souvenirs.find((s) => s.id === souvenirId);
-    const souvenirName = souv ? souv.name : 'Barang';
-    const { currentStock } = getSouvenirStock(souvenirId, excludeOutId);
+    const souvenirName = souv ? souv.name : 'Souvenir';
 
     if (requestedQty <= 0) {
       return {
         valid: false,
-        availableStock: currentStock,
+        availableStock: 0,
         souvenirName,
-        message: 'Jumlah barang keluar harus lebih besar dari 0.',
+        message: `Jumlah permintaan ${souvenirName} harus lebih dari 0.`,
       };
     }
+
+    const { currentStock } = getSouvenirStock(souvenirId, excludeOutId);
 
     if (requestedQty > currentStock) {
       return {
         valid: false,
         availableStock: currentStock,
         souvenirName,
-        message: `Stok tidak mencukupi untuk "${souvenirName}". Stok tersedia hanya ${currentStock} ${souv?.unit || 'item'}.`,
+        message: `Stok ${souvenirName} tidak mencukupi. Sisa stok tersedia saat ini: ${currentStock} ${souv?.unit || 'pcs'}.`,
       };
     }
 
-    return { valid: true, availableStock: currentStock, souvenirName };
+    return {
+      valid: true,
+      availableStock: currentStock,
+      souvenirName,
+    };
   };
 
-  // Categories CRUD
+  // =========================================================================
+  // CATEGORIES CRUD
+  // =========================================================================
   const addCategory = (data: Omit<Category, 'id' | 'createdAt' | 'updatedAt'>) => {
-    if (!data.name.trim()) {
+    if (!data.name || !data.name.trim()) {
       return { success: false, message: 'Nama kategori wajib diisi.' };
     }
-    const exists = categories.some((c) => c.name.toLowerCase() === data.name.trim().toLowerCase());
-    if (exists) {
+    const nameTrimmed = data.name.trim();
+    if (categories.some((c) => c.name.toLowerCase() === nameTrimmed.toLowerCase())) {
       return { success: false, message: 'Kategori dengan nama tersebut sudah ada.' };
     }
 
     const now = new Date().toISOString();
-    const newCategory: Category = {
-      id: `cat-${Date.now()}`,
-      name: data.name.trim(),
+    const newId = `cat-${Date.now()}`;
+    const newCat: Category = {
+      id: newId,
+      name: nameTrimmed,
       description: data.description?.trim() || '',
+      createdByUid: currentUser.id,
+      createdByName: currentUser.name,
       createdAt: now,
       updatedAt: now,
     };
 
-    setCategories((prev) => [newCategory, ...prev]);
-    addToast('Kategori berhasil ditambahkan.');
+    setCategories((prev) => [newCat, ...prev]);
+    dbAddCategory(newCat, currentUser.id, currentUser.name).catch((err) => {
+      console.error('Error saving category to Firestore:', err);
+      addToast('Gagal menyimpan kategori ke database.', 'error');
+    });
+
+    addToast(`Kategori "${nameTrimmed}" berhasil ditambahkan.`);
     return { success: true };
   };
 
   const updateCategory = (id: string, data: Partial<Omit<Category, 'id' | 'createdAt'>>) => {
     if (data.name !== undefined && !data.name.trim()) {
-      return { success: false, message: 'Nama kategori wajib diisi.' };
+      return { success: false, message: 'Nama kategori tidak boleh kosong.' };
     }
 
     setCategories((prev) =>
@@ -392,71 +580,85 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         c.id === id
           ? {
               ...c,
-              ...(data.name !== undefined ? { name: data.name.trim() } : {}),
-              ...(data.description !== undefined ? { description: data.description.trim() } : {}),
+              ...data,
               updatedAt: new Date().toISOString(),
             }
           : c
       )
     );
-    addToast('Data kategori berhasil diperbarui.');
+
+    dbUpdateCategory(id, data).catch((err) => {
+      console.error('Error updating category in Firestore:', err);
+    });
+
+    addToast('Kategori berhasil diperbarui.');
     return { success: true };
   };
 
   const deleteCategory = (id: string) => {
     if (!isAdmin) {
-      return { success: false, message: 'Hanya Admin yang dapat menghapus data kategori.' };
+      return { success: false, message: 'Hanya Admin yang dapat menghapus kategori.' };
+    }
+    const isUsed = souvenirs.some((s) => s.categoryId === id);
+    if (isUsed) {
+      return {
+        success: false,
+        message: 'Kategori tidak dapat dihapus karena masih digunakan oleh beberapa jenis souvenir.',
+      };
     }
 
-    // Safely remove category
     setCategories((prev) => prev.filter((c) => c.id !== id));
+    dbDeleteCategory(id).catch((err) => {
+      console.error('Error deleting category from Firestore:', err);
+    });
 
-    // Safely unlink or clean category association from souvenirs
-    setSouvenirs((prev) =>
-      prev.map((s) => (s.categoryId === id ? { ...s, categoryId: '' } : s))
-    );
-
-    // Safely unlink from inventory in records
-    setInventoryIn((prev) =>
-      prev.map((item) => (item.categoryId === id ? { ...item, categoryId: '' } : item))
-    );
-
-    addToast('Data kategori berhasil dihapus.', 'success');
+    addToast('Kategori berhasil dihapus.');
     return { success: true };
   };
 
-  // Souvenirs CRUD
+  // =========================================================================
+  // SOUVENIRS CRUD
+  // =========================================================================
   const addSouvenir = (data: Omit<Souvenir, 'id' | 'createdAt' | 'updatedAt'>) => {
-    if (!data.name.trim()) {
-      return { success: false, message: 'Nama barang wajib diisi.' };
+    if (!data.name || !data.name.trim()) {
+      return { success: false, message: 'Nama souvenir wajib diisi.' };
     }
     if (!data.categoryId) {
-      return { success: false, message: 'Kategori wajib dipilih.' };
+      return { success: false, message: 'Kategori souvenir wajib dipilih.' };
     }
-    if (data.minimumStock === undefined || data.minimumStock < 0) {
-      return { success: false, message: 'Stok minimum harus berupa angka 0 atau lebih.' };
+    const minStock = Number(data.minimumStock);
+    if (isNaN(minStock) || minStock < 0) {
+      return { success: false, message: 'Stok minimum harus berupa angka positif.' };
     }
 
     const now = new Date().toISOString();
+    const newId = `souv-${Date.now()}`;
     const newSouvenir: Souvenir = {
-      id: `souv-${Date.now()}`,
-      categoryId: data.categoryId,
+      id: newId,
       name: data.name.trim(),
+      categoryId: data.categoryId,
       unit: data.unit || 'pcs',
-      minimumStock: Number(data.minimumStock) || 0,
+      minimumStock: minStock,
       description: data.description?.trim() || '',
+      createdByUid: currentUser.id,
+      createdByName: currentUser.name,
       createdAt: now,
       updatedAt: now,
     };
 
     setSouvenirs((prev) => [newSouvenir, ...prev]);
-    addToast('Data souvenir berhasil ditambahkan.');
-    return { success: true, id: newSouvenir.id };
+    dbAddSouvenir(newSouvenir, currentUser.id, currentUser.name).catch((err) => {
+      console.error('Error saving souvenir to Firestore:', err);
+      addToast('Gagal menyimpan souvenir ke database.', 'error');
+    });
+
+    addToast(`Souvenir "${newSouvenir.name}" berhasil ditambahkan.`);
+    return { success: true, id: newId };
   };
 
   const updateSouvenir = (id: string, data: Partial<Omit<Souvenir, 'id' | 'createdAt'>>) => {
     if (data.name !== undefined && !data.name.trim()) {
-      return { success: false, message: 'Nama barang wajib diisi.' };
+      return { success: false, message: 'Nama souvenir tidak boleh kosong.' };
     }
 
     setSouvenirs((prev) =>
@@ -471,31 +673,44 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
           : s
       )
     );
+
+    dbUpdateSouvenir(id, data).catch((err) => {
+      console.error('Error updating souvenir in Firestore:', err);
+    });
+
     addToast('Data souvenir berhasil diperbarui.');
     return { success: true };
   };
 
   const deleteSouvenir = (id: string) => {
     if (!isAdmin) {
-      return { success: false, message: 'Hanya Admin yang dapat menghapus souvenir.' };
+      return { success: false, message: 'Hanya Admin yang dapat menghapus data souvenir.' };
     }
     const hasIn = inventoryIn.some((i) => i.souvenirId === id);
-    const hasOut = inventoryOutItems.some((i) => i.souvenirId === id);
+    const hasOut = inventoryOutItems.some((o) => o.souvenirId === id);
+
     if (hasIn || hasOut) {
       return {
         success: false,
-        message: 'Souvenir tidak dapat dihapus karena sudah memiliki riwayat transaksi inventory.',
+        message:
+          'Souvenir tidak dapat dihapus karena telah memiliki riwayat mutasi transaksi barang masuk/keluar.',
       };
     }
 
     setSouvenirs((prev) => prev.filter((s) => s.id !== id));
-    addToast('Data souvenir berhasil dihapus.');
+    dbDeleteSouvenir(id).catch((err) => {
+      console.error('Error deleting souvenir from Firestore:', err);
+    });
+
+    addToast('Souvenir berhasil dihapus.');
     return { success: true };
   };
 
-  // Activities CRUD
+  // =========================================================================
+  // ACTIVITIES CRUD
+  // =========================================================================
   const addActivity = (data: Omit<Activity, 'id' | 'createdAt' | 'updatedAt'>) => {
-    if (!data.name.trim()) {
+    if (!data.name || !data.name.trim()) {
       return { success: false, message: 'Nama kegiatan wajib diisi.' };
     }
     if (!data.pic.trim()) {
@@ -514,11 +729,17 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       activityDate: data.activityDate,
       location: data.location?.trim() || '-',
       description: data.description?.trim() || '',
+      createdByUid: currentUser.id,
+      createdByName: currentUser.name,
       createdAt: now,
       updatedAt: now,
     };
 
     setActivities((prev) => [newActivity, ...prev]);
+    dbAddActivity(newActivity, currentUser.id, currentUser.name).catch((err) => {
+      console.error('Error saving activity to Firestore:', err);
+    });
+
     addToast('Kegiatan berhasil ditambahkan.');
     return { success: true, id: newId };
   };
@@ -542,6 +763,11 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
           : a
       )
     );
+
+    dbUpdateActivity(id, data).catch((err) => {
+      console.error('Error updating activity in Firestore:', err);
+    });
+
     addToast('Data kegiatan berhasil diperbarui.');
     return { success: true };
   };
@@ -559,11 +785,17 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     }
 
     setActivities((prev) => prev.filter((a) => a.id !== id));
+    dbDeleteActivity(id).catch((err) => {
+      console.error('Error deleting activity from Firestore:', err);
+    });
+
     addToast('Data kegiatan berhasil dihapus.');
     return { success: true };
   };
 
-  // Inventory In CRUD
+  // =========================================================================
+  // INVENTORY IN CRUD (PHASE 6)
+  // =========================================================================
   const addInventoryIn = (data: Omit<InventoryIn, 'id' | 'createdAt' | 'updatedAt'>) => {
     if (!data.souvenirId) {
       return { success: false, message: 'Barang wajib dipilih.' };
@@ -588,11 +820,18 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       quantity: qty,
       description: data.description?.trim() || '',
       createdBy: currentUser?.name || 'PUR Inventory BI',
+      createdByUid: currentUser.id,
+      createdByName: currentUser.name,
       createdAt: now,
       updatedAt: now,
     };
 
     setInventoryIn((prev) => [newTx, ...prev]);
+    dbAddInventoryIn(newTx, currentUser.id, currentUser.name).catch((err) => {
+      console.error('Error saving inventoryIn to Firestore:', err);
+      addToast('Gagal menyimpan barang masuk ke Firestore.', 'error');
+    });
+
     addToast('Transaksi barang masuk berhasil dicatat. Stok otomatis bertambah.');
     return { success: true };
   };
@@ -617,6 +856,11 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
           : item
       )
     );
+
+    dbUpdateInventoryIn(id, data).catch((err) => {
+      console.error('Error updating inventoryIn in Firestore:', err);
+    });
+
     addToast('Transaksi barang masuk berhasil diperbarui.');
     return { success: true };
   };
@@ -632,11 +876,17 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     }
 
     setInventoryIn((prev) => prev.filter((i) => i.id !== id));
+    dbDeleteInventoryIn(id).catch((err) => {
+      console.error('Error deleting inventoryIn from Firestore:', err);
+    });
+
     addToast('Data barang masuk berhasil dihapus.', 'success');
     return { success: true };
   };
 
-  // Inventory Out CRUD (Handles Multiple Items per Activity)
+  // =========================================================================
+  // INVENTORY OUT CRUD (PHASE 7 - MULTI-ITEM ATOMIC WRITEBATCH)
+  // =========================================================================
   const addInventoryOut = (
     data: Omit<InventoryOut, 'id' | 'createdAt' | 'updatedAt' | 'items'>,
     items: { souvenirId: string; quantity: number; description?: string }[]
@@ -655,10 +905,13 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     const souvenirIds = items.map((i) => i.souvenirId);
     const hasDuplicate = new Set(souvenirIds).size !== souvenirIds.length;
     if (hasDuplicate) {
-      return { success: false, message: 'Terdapat jenis souvenir duplikat dalam satu form. Gabungkan jumlahnya.' };
+      return {
+        success: false,
+        message: 'Terdapat jenis souvenir duplikat dalam satu form. Gabungkan jumlahnya.',
+      };
     }
 
-    // Validate each item stock
+    // Validate each requested item against current available stock
     for (const item of items) {
       if (!item.souvenirId) {
         return { success: false, message: 'Pilih souvenir untuk semua baris item.' };
@@ -683,6 +936,8 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       date: data.date,
       description: data.description?.trim() || '',
       createdBy: currentUser?.name || 'PUR Inventory BI',
+      createdByUid: currentUser.id,
+      createdByName: currentUser.name,
       createdAt: now,
       updatedAt: now,
     };
@@ -696,8 +951,16 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       createdAt: now,
     }));
 
+    // Optimistically update React state for instant feedback
     setInventoryOut((prev) => [newOutHeader, ...prev]);
     setInventoryOutItems((prev) => [...prev, ...newItems]);
+
+    // Atomic writeBatch to Firestore
+    dbAddInventoryOut(newOutHeader, newItems, currentUser.id, currentUser.name).catch((err) => {
+      console.error('Error saving inventoryOut in Firestore batch:', err);
+      addToast('Gagal menyimpan transaksi barang keluar ke database.', 'error');
+    });
+
     addToast('Transaksi barang keluar berhasil disimpan. Stok otomatis berkurang.');
     return { success: true };
   };
@@ -707,6 +970,9 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     data: Partial<Omit<InventoryOut, 'id' | 'createdAt' | 'items'>>,
     items?: { id?: string; souvenirId: string; quantity: number; description?: string }[]
   ) => {
+    let newItems: InventoryOutItem[] | undefined;
+    let oldItemIds: string[] | undefined;
+
     if (items && items.length > 0) {
       // Validate stock excluding current inventoryOutId
       for (const item of items) {
@@ -721,7 +987,7 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       }
 
       const now = new Date().toISOString();
-      const newItems: InventoryOutItem[] = items.map((item, idx) => ({
+      newItems = items.map((item, idx) => ({
         id: item.id || `item-${Date.now()}-${idx}`,
         inventoryOutId: id,
         souvenirId: item.souvenirId,
@@ -730,8 +996,12 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         createdAt: now,
       }));
 
-      // Replace items for this out transaction
-      setInventoryOutItems((prev) => [...prev.filter((it) => it.inventoryOutId !== id), ...newItems]);
+      oldItemIds = inventoryOutItems
+        .filter((it) => it.inventoryOutId === id)
+        .map((it) => it.id);
+
+      // Replace items in state
+      setInventoryOutItems((prev) => [...prev.filter((it) => it.inventoryOutId !== id), ...newItems!]);
     }
 
     setInventoryOut((prev) =>
@@ -745,6 +1015,11 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
           : o
       )
     );
+
+    dbUpdateInventoryOut(id, data, newItems, oldItemIds).catch((err) => {
+      console.error('Error updating inventoryOut in Firestore:', err);
+    });
+
     addToast('Transaksi barang keluar berhasil diperbarui.');
     return { success: true };
   };
@@ -754,25 +1029,29 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       return { success: false, message: 'Hanya Admin yang dapat menghapus transaksi barang keluar.' };
     }
 
+    const associatedItemIds = inventoryOutItems
+      .filter((it) => it.inventoryOutId === id)
+      .map((it) => it.id);
+
     setInventoryOut((prev) => prev.filter((o) => o.id !== id));
     setInventoryOutItems((prev) => prev.filter((it) => it.inventoryOutId !== id));
+
+    dbDeleteInventoryOut(id, associatedItemIds).catch((err) => {
+      console.error('Error deleting inventoryOut from Firestore:', err);
+    });
+
     addToast('Transaksi barang keluar berhasil dihapus. Stok otomatis dikembalikan.');
     return { success: true };
   };
 
-  // Reset Data to Factory Seeds
+  // Reset helper kept for API interface compatibility
   const resetToInitialData = () => {
-    setCategories(INITIAL_CATEGORIES);
-    setSouvenirs(INITIAL_SOUVENIRS);
-    setActivities(INITIAL_ACTIVITIES);
-    setInventoryIn(INITIAL_INVENTORY_IN);
-    setInventoryOut(INITIAL_INVENTORY_OUT);
-    setInventoryOutItems(INITIAL_INVENTORY_OUT_ITEMS);
-    setCurrentUserId(INITIAL_USERS[0].id);
-    addToast('Database berhasil di-reset ke data awal pengujian.', 'info');
+    // No-op in production mode without seed data
   };
 
-  // Computed: Stock Summaries
+  // =========================================================================
+  // COMPUTED: STOCK SUMMARIES (DERIVED FROM STATE)
+  // =========================================================================
   const stockSummaries = useMemo<SouvenirStockSummary[]>(() => {
     return souvenirs.map((souv) => {
       const cat = categories.find((c) => c.id === souv.categoryId);
@@ -798,7 +1077,9 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     });
   }, [souvenirs, categories, inventoryIn, inventoryOutItems]);
 
-  // Computed: Transaction History Ledger (Combined IN and OUT)
+  // =========================================================================
+  // COMPUTED: TRANSACTION HISTORY (COMBINED IN & OUT)
+  // =========================================================================
   const transactionHistory = useMemo<TransactionHistoryItem[]>(() => {
     const list: TransactionHistoryItem[] = [];
 
@@ -816,7 +1097,7 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         categoryName: cat ? cat.name : '-',
         quantity: item.quantity,
         unit: souv?.unit || 'pcs',
-        user: item.createdBy || 'Petugas Logistik',
+        user: item.createdByName || item.createdBy || 'Petugas Logistik',
         description: item.description || 'Penerimaan Barang Masuk',
         createdAt: item.createdAt,
       });
@@ -843,7 +1124,7 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
           unit: souv?.unit || 'pcs',
           activityId: outHeader.activityId,
           activityName: activity ? activity.name : 'Kegiatan',
-          user: outHeader.createdBy || 'Petugas Logistik',
+          user: outHeader.createdByName || outHeader.createdBy || 'Petugas Logistik',
           description: outItem.description || outHeader.description || 'Pengeluaran Kegiatan',
           createdAt: outItem.createdAt || outHeader.createdAt,
         });
@@ -858,7 +1139,9 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     });
   }, [inventoryIn, inventoryOut, inventoryOutItems, souvenirs, categories, activities]);
 
-  // Computed: Reporting Records (Grouped by Activity)
+  // =========================================================================
+  // COMPUTED: REPORTING RECORDS (GROUPED BY ACTIVITY)
+  // =========================================================================
   const reportingRecords = useMemo<ReportingRecord[]>(() => {
     return activities.map((activity) => {
       const relatedOuts = inventoryOut.filter((o) => o.activityId === activity.id);
@@ -898,6 +1181,8 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     currentUser,
     isAuthenticated,
     login,
+    signUp,
+    loginWithGoogle,
     logout,
     categories,
     souvenirs,

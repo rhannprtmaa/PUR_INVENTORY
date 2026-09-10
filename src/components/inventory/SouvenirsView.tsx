@@ -332,18 +332,6 @@ export const SouvenirsView: React.FC<SouvenirsViewProps> = ({ onSelectSouvenirDe
             <FileSpreadsheet className="w-3.5 h-3.5" />
             <span className="hidden sm:inline">Unduh Excel</span>
           </button>
-
-          {/* Add Souvenir (Admin) */}
-          {isAdmin && (
-            <button
-              id="btn-add-souvenir-catalog"
-              onClick={handleOpenAddModal}
-              className="flex items-center gap-1.5 px-3.5 py-2 bg-[#04457e] hover:bg-[#033663] active:bg-[#022849] text-white text-xs font-bold rounded-xl transition-all shadow-xs cursor-pointer"
-            >
-              <Plus className="w-4 h-4" />
-              <span>Tambah Souvenir</span>
-            </button>
-          )}
         </div>
       </div>
 

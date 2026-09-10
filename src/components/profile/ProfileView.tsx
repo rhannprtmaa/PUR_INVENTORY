@@ -28,6 +28,13 @@ export const ProfileView: React.FC = () => {
   const [isSavingProfile, setIsSavingProfile] = useState(false);
   const [profileSuccessMsg, setProfileSuccessMsg] = useState('');
 
+  React.useEffect(() => {
+    setName(currentUser.name);
+    setEmail(currentUser.email);
+    setDepartment(currentUser.department || 'Unit PUR & Logistik BI Sulsel');
+    setAvatar(currentUser.avatar || '/logo-bi.png');
+  }, [currentUser]);
+
   // Password fields
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
