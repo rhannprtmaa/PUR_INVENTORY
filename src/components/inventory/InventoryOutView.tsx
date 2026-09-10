@@ -1002,12 +1002,12 @@ export const InventoryOutView: React.FC<InventoryOutViewProps> = ({
               {/* General Note */}
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-1">
-                  Keterangan Umum / Dokumen Pengeluaran
+                  Keterangan Umum
                 </label>
                 <textarea
                   id="input-out-general-desc"
                   rows={2}
-                  placeholder="Contoh: Diserahkan kepada panitia sosialisasi dengan Berita Acara #BA-2026-08..."
+                  placeholder="Contoh: untuk kebutuhan kegiatan sosialisasi."
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
                   className="w-full px-3.5 py-2 text-xs font-medium rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-[#04457e]/20 focus:border-[#04457e] bg-white text-slate-800 resize-none"
@@ -1028,7 +1028,7 @@ export const InventoryOutView: React.FC<InventoryOutViewProps> = ({
                   type="submit"
                   className="px-5 py-2 text-xs font-bold text-white bg-[#04457e] hover:bg-[#033663] active:bg-[#022849] rounded-xl transition-all shadow-xs cursor-pointer"
                 >
-                  {editingOut ? 'Simpan Perubahan' : 'Simpan Transaksi Keluar'}
+                  {editingOut ? 'Simpan Perubahan' : 'Simpan Barang Keluar'}
                 </button>
               </div>
             </form>

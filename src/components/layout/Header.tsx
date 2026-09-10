@@ -59,9 +59,9 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, onOpenMobileMenu, onN
   return (
     <header
       id="main-header"
-      className="sticky top-0 z-30 bg-white/95 backdrop-blur-md border-b border-slate-200/80 px-3 sm:px-6 lg:px-8 py-3 transition-all safe-top"
+      className="sticky top-0 z-30 h-16 bg-white/95 backdrop-blur-md border-b border-slate-200/80 px-4 sm:px-6 lg:px-8 flex items-center transition-all safe-top flex-shrink-0"
     >
-      <div className="flex items-center justify-between gap-2 sm:gap-4">
+      <div className="w-full flex items-center justify-between gap-2 sm:gap-4">
         {/* Left: Mobile Toggle, Mobile Logo & Page Title */}
         <div className="flex items-center gap-2 sm:gap-3 min-w-0">
           <button

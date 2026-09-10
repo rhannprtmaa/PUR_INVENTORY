@@ -83,7 +83,7 @@ const MainContent: React.FC = () => {
         />
 
         {/* Scrollable View Area */}
-        <main className="flex-1 overflow-y-auto p-3 sm:p-5 md:p-6 lg:p-8 safe-bottom">
+        <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 pb-10 sm:pb-12 safe-bottom">
           <div className="max-w-7xl mx-auto">
             {activeTab === 'dashboard' && (
               <DashboardView

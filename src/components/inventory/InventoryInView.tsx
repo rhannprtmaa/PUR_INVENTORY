@@ -399,7 +399,7 @@ export const InventoryInView: React.FC<InventoryInViewProps> = ({ onSelectSouven
             Pencatatan Barang Masuk (Inventory In)
           </h3>
           <p className="text-xs text-slate-500 mt-0.5">
-            Pencatatan penerimaan barang souvenir dan riwayat masuk persediaan
+            Pencatatan penerimaan souvenir 
           </p>
         </div>
 
@@ -889,7 +889,7 @@ export const InventoryInView: React.FC<InventoryInViewProps> = ({ onSelectSouven
                       type="text"
                       list="souvenirs-datalist"
                       required
-                      placeholder="Ketik nama barang / pilih dari daftar (contoh: Tumbler BI, Tas Spunbond)..."
+                      placeholder="Ketik nama barang (contoh: Tumbler BI)..."
                       value={souvenirName}
                       onChange={(e) => handleSouvenirNameChange(e.target.value)}
                       autoComplete="off"
@@ -986,7 +986,7 @@ export const InventoryInView: React.FC<InventoryInViewProps> = ({ onSelectSouven
                   <textarea
                     id="input-desc-in-form"
                     rows={3}
-                    placeholder="Contoh: Pengadaan Batch II dari CV Percetakan Mandiri, Surat Jalan #SJ-2026-08..."
+                    placeholder="Contoh: Pengadaan Triwulan III"
                     value={description}
                     onChange={(e) => setDescription(e.target.value)}
                     className="w-full px-3.5 py-2 text-xs font-medium rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-[#04457e]/20 focus:border-[#04457e] resize-none bg-white text-slate-800 placeholder:text-slate-400"

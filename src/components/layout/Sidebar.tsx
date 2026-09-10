@@ -283,11 +283,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
         </div>
 
         {/* User Card & Profile Navigation Footer */}
-        <div className="p-3 border-t border-white/10 bg-[#033663]/50 flex-shrink-0 safe-bottom">
+        <div className="p-3.5 pt-3.5 pb-8 sm:pb-10 border-t border-white/10 bg-[#033663]/50 flex-shrink-0 safe-bottom">
           <div
-            className={`flex items-center justify-between p-2 rounded-xl transition-all ${
+            className={`flex items-center justify-between p-2.5 mb-1 rounded-2xl transition-all shadow-xs ${
               activeTab === 'profile'
-                ? 'bg-white/20 border border-white/30 ring-2 ring-sky-300/40 shadow-xs'
+                ? 'bg-white/20 border border-white/30 ring-2 ring-sky-300/40'
                 : 'bg-white/10 border border-white/10 hover:bg-white/15'
             }`}
           >

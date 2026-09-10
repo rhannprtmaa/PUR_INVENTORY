@@ -558,7 +558,7 @@ export const ActivitiesView: React.FC<ActivitiesViewProps> = ({
                     id="input-activity-name"
                     type="text"
                     required
-                    placeholder="Contoh: Sosialisasi CBP Rupiah, Seminar Nasional QRIS..."
+                    placeholder="Contoh: Sosialisasi CBP Rupiah..."
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     className="w-full px-3.5 py-2 text-xs font-medium rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-[#04457e]/20 focus:border-[#04457e] bg-white text-slate-800"
@@ -574,7 +574,7 @@ export const ActivitiesView: React.FC<ActivitiesViewProps> = ({
                       id="input-activity-pic"
                       type="text"
                       required
-                      placeholder="Contoh: Kak Bombom..."
+                      placeholder="Contoh: Kak Raihan..."
                       value={pic}
                       onChange={(e) => setPic(e.target.value)}
                       className="w-full px-3.5 py-2 text-xs font-medium rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-[#04457e]/20 focus:border-[#04457e] bg-white text-slate-800"
@@ -603,7 +603,7 @@ export const ActivitiesView: React.FC<ActivitiesViewProps> = ({
                   <input
                     id="input-activity-location"
                     type="text"
-                    placeholder="Contoh: Ballroom Hotel Claro Makassar, Ruang Rapat Lt 3..."
+                    placeholder="Contoh: Ballroom Hotel Claro Makassar..."
                     value={location}
                     onChange={(e) => setLocation(e.target.value)}
                     className="w-full px-3.5 py-2 text-xs font-medium rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-[#04457e]/20 focus:border-[#04457e] bg-white text-slate-800"
@@ -617,7 +617,7 @@ export const ActivitiesView: React.FC<ActivitiesViewProps> = ({
                   <textarea
                     id="input-activity-desc"
                     rows={3}
-                    placeholder="Contoh: Sosialisasi Cinta, Bangga, Paham Rupiah untuk 200 peserta..."
+                    placeholder="Contoh: Sosialisasi CBP untuk 200 peserta..."
                     value={description}
                     onChange={(e) => setDescription(e.target.value)}
                     className="w-full px-3.5 py-2 text-xs font-medium rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-[#04457e]/20 focus:border-[#04457e] bg-white text-slate-800 resize-none"
