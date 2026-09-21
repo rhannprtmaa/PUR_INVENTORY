@@ -168,7 +168,11 @@ const getStoredProfile = (): User => {
 };
 
 const getStoredPassword = (): string => {
-  return localStorage.getItem('pur_user_password_v1') || 'admin123';
+  const stored = localStorage.getItem('pur_user_password_v1');
+  if (!stored || stored === 'admin123') {
+    return 'magang2026tw3';
+  }
+  return stored;
 };
 
 export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -324,7 +328,7 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   };
 
   const loginWithGoogle = async () => {
-    return login('purinventorybi@gmail.com', 'admin123');
+    return login('purinventorybi@gmail.com', 'magang2026tw3');
   };
 
   const logout = async () => {

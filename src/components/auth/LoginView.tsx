@@ -5,7 +5,7 @@ import { useInventory } from '../../context/InventoryContext';
 export const LoginView: React.FC = () => {
   const { login } = useInventory();
   const [email, setEmail] = useState('purinventorybi@gmail.com');
-  const [password, setPassword] = useState('admin123');
+  const [password, setPassword] = useState('magang2026tw3');
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
@@ -228,9 +228,18 @@ export const LoginView: React.FC = () => {
               <KeyRound className="w-6 h-6" />
             </div>
             <div className="text-center">
-              <h3 className="text-base font-bold text-slate-900">Bantuan Akses Akun</h3>
-              <p className="text-xs text-slate-500 mt-1.5 leading-relaxed">
-                Akun Utama Sistem: <strong>purinventorybi@gmail.com</strong> dengan kata sandi awal <strong>admin123</strong> (atau kata sandi baru yang telah Anda perbarui di menu Profil).
+              <h3 className="text-base font-bold text-slate-900">Bantuan Kata Sandi</h3>
+              <p className="text-xs text-slate-600 mt-2.5 leading-relaxed">
+                Silahkan hubungi developer magang tw 3 2026 di instagram{' '}
+                <a
+                  href="https://instagram.com/rhannprtmaa"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="font-bold text-[#04457e] hover:underline"
+                >
+                  @rhannprtmaa
+                </a>{' '}
+                jika ingin mengubah kata sandi atau sandinya bermalasah
               </p>
             </div>
             <div className="pt-2">
