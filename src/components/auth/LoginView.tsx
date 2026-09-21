@@ -4,8 +4,8 @@ import { useInventory } from '../../context/InventoryContext';
 
 export const LoginView: React.FC = () => {
   const { login } = useInventory();
-  const [email, setEmail] = useState('purinventorybi@gmail.com');
-  const [password, setPassword] = useState('magang2026tw3');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
